@@ -13,12 +13,10 @@
   "summaryDone": "{count} Wörter geschafft.",
   "summaryAgain": "Nächstes Mal noch üben:",
   "newSession": "Neue Sitzung",
-  "focus": {
-    "tr_dr": "TR · DR",
-    "pr_br": "PR · BR",
-    "cr_gr_fr": "CR · GR · FR",
-    "r_iniziale": "R am Anfang",
-    "r_intervocalica": "R zwischen Vokalen",
-    "rr_doppia": "Doppeltes RR"
-  }
+  "focus.tr_dr": "TR · DR",
+  "focus.pr_br": "PR · BR",
+  "focus.cr_gr_fr": "CR · GR · FR",
+  "focus.r_iniziale": "R am Anfang",
+  "focus.r_intervocalica": "R zwischen Vokalen",
+  "focus.rr_doppia": "Doppeltes RR"
 }

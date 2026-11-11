@@ -1,29 +1,48 @@
-.morning-timer { display: flex; flex-direction: column; gap: var(--space-4, 1rem); }
+.mt { display: flex; flex-direction: column; gap: var(--space-4, 1rem); }
 
-.morning-timer__intro { margin: 0; color: var(--text-muted, #5b6472); }
+.mt__intro { margin: 0; color: var(--text-muted, #5b6472); }
 
-.morning-timer__head {
+.mt__setup-row {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
+  flex-wrap: wrap;
   gap: var(--space-3, 0.75rem);
+}
+
+.mt__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+  min-width: 10rem;
+  flex: 1 1 10rem;
+}
+
+.mt__field input {
+  min-height: 44px;
+  padding: 0.5rem 0.65rem;
+  border-radius: var(--radius-md, 10px);
+  border: 1px solid var(--border-subtle, #e5e7eb);
+  background: var(--surface-raised, #fff);
+  font: inherit;
+  color: inherit;
+}
+
+.mt__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4, 1rem);
   padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
   border-radius: var(--radius-lg, 14px);
   background: color-mix(in srgb, var(--active-module-accent, #2563EB) 10%, transparent);
 }
 
-.morning-timer__head--over {
-  background: color-mix(in srgb, #DC2626 14%, transparent);
-}
+.mt__head--over { background: color-mix(in srgb, #DC2626 14%, transparent); }
 
-.morning-timer__head-label { font-size: 0.9rem; color: var(--text-muted, #5b6472); }
-.morning-timer__head-value {
-  font-size: 1.6rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
+.mt__head > div { display: flex; flex-direction: column; gap: 0.1rem; min-width: 5.5rem; }
+.mt__head-label { font-size: 0.8rem; color: var(--text-muted, #5b6472); }
+.mt__head-value { font-size: 1.35rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 
-.morning-timer__steps {
+.mt__steps {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -32,49 +51,85 @@
   gap: var(--space-2, 0.5rem);
 }
 
-.morning-timer__step {
+.mt__step {
   display: grid;
   grid-template-columns: auto 1fr auto auto;
   align-items: center;
   gap: var(--space-3, 0.75rem);
   padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
   border-radius: var(--radius-lg, 14px);
-  background: var(--surface-raised, #fff);
   border: 1px solid var(--border-subtle, #e5e7eb);
+  background: var(--surface-raised, #fff);
 }
 
-.morning-timer__step.is-current {
+.mt__step.is-current {
   border-color: var(--active-module-accent, #2563EB);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--active-module-accent, #2563EB) 22%, transparent);
 }
 
-.morning-timer__step.is-done { opacity: 0.6; }
-.morning-timer__step.is-over .morning-timer__budget { color: #DC2626; font-weight: 700; }
+.mt__step.is-done { opacity: 0.55; }
+.mt__step.is-skipped { opacity: 0.45; }
+.mt__step.is-over .mt__step-meta strong { color: #DC2626; }
 
-.morning-timer__step-label { min-width: 0; }
-.morning-timer__budget {
+.mt__step-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--active-module-accent, #2563EB) 14%, transparent);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.mt__step-label { min-width: 0; overflow-wrap: anywhere; }
+.mt__step-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
   font-variant-numeric: tabular-nums;
   color: var(--text-muted, #5b6472);
 }
+.mt__step-kind { font-size: 0.75rem; }
+.mt__step-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
 
-.morning-timer__start { align-self: flex-start; }
-.morning-timer__reset { align-self: flex-start; }
-
-.morning-timer__finished {
-  margin: 0;
-  padding: var(--space-4, 1rem);
-  border-radius: var(--radius-lg, 14px);
-  background: color-mix(in srgb, #16A34A 12%, transparent);
-  font-weight: 600;
+/* Einrichtung: jede Zeile ist ein Formular, kein Kartenlayout. */
+.mt__step--edit {
+  grid-template-columns: 1fr 4.5rem 8rem 4.5rem auto;
+  gap: 0.5rem;
 }
 
-@media (max-width: 480px) {
-  .morning-timer__step {
-    grid-template-columns: auto 1fr auto;
-    grid-template-areas: "icon label budget" ". button button";
-  }
-  .morning-timer__step > i { grid-area: icon; }
-  .morning-timer__step-label { grid-area: label; }
-  .morning-timer__budget { grid-area: budget; }
-  .morning-timer__step [data-timer-done] { grid-area: button; justify-self: start; }
+.mt__step--edit input,
+.mt__step--edit select {
+  min-height: 40px;
+  padding: 0.35rem 0.5rem;
+  border-radius: var(--radius-md, 10px);
+  border: 1px solid var(--border-subtle, #e5e7eb);
+  background: var(--surface-raised, #fff);
+  font: inherit;
+  color: inherit;
+  min-width: 0;
+}
+
+.mt__setup-actions { display: flex; gap: var(--space-3, 0.75rem); flex-wrap: wrap; align-items: center; }
+.mt__foot { display: flex; gap: var(--space-3, 0.75rem); flex-wrap: wrap; }
+
+.mt__summary {
+  padding: var(--space-4, 1rem);
+  border-radius: var(--radius-lg, 14px);
+}
+.mt__summary--ok { background: color-mix(in srgb, #16A34A 12%, transparent); }
+.mt__summary--late { background: color-mix(in srgb, #DC2626 12%, transparent); }
+.mt__summary-title { margin: 0 0 0.35rem; font-size: 1.1rem; font-weight: 700; }
+.mt__summary-line { margin: 0; color: var(--text-muted, #5b6472); }
+
+@media (max-width: 640px) {
+  .mt__step { grid-template-columns: auto 1fr auto; grid-template-areas: "mark label meta" "mark actions actions"; }
+  .mt__step-mark { grid-area: mark; }
+  .mt__step-label { grid-area: label; }
+  .mt__step-meta { grid-area: meta; }
+  .mt__step-actions { grid-area: actions; }
+  .mt__step--edit { grid-template-columns: 1fr 1fr; grid-template-areas: none; }
+  .mt__step-actions > .btn { flex: 1 1 auto; }
 }

@@ -239,9 +239,9 @@ function loadItems({ category, locationId, status, q, containerId, kind } = {}, 
     // Frage, fuer die es angelegt wurde.
     // Der Behaeltername ist mitgesucht: "Schachtel Werkzeug" findet sonst
     // nichts, obwohl der Karton genau so heisst (Familien-Fork, §10.2).
-    clauses.push('(ii.name LIKE ? OR ii.brand LIKE ? OR ii.model LIKE ? OR ii.serial_number LIKE ? OR ii.account_username LIKE ? OR c.name LIKE ?)');
+    clauses.push('(ii.name LIKE ? OR ii.brand LIKE ? OR ii.model LIKE ? OR ii.serial_number LIKE ? OR ii.account_username LIKE ? OR c.name LIKE ? OR ii.tags LIKE ?)');
     const like = `%${q}%`;
-    params.push(like, like, like, like, like, like);
+    params.push(like, like, like, like, like, like, like);
   }
   const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
   const rows = db.get().prepare(`
@@ -347,6 +347,33 @@ function validateItemFields(body) {
       }
     }
     values.container_id = vContainer.value;
+  }
+
+  // ── Menge und Schlagworte (Rueckmeldung Gabry, 2026-11-11) ─────────────
+  // `quantity` ist eine Dezimalzahl ALS TEXT: der Bestand kennt halbe Mengen,
+  // und REAL/NUMERIC wuerde runden. Ein leer gelassenes Feld bedeutet 1 (ein
+  // Gegenstand), NICHT 0 - "null Stueck" waere eine Aussage, die niemand macht.
+  if (body.quantity === null || body.quantity === '' || body.quantity === undefined) {
+    values.quantity = '1';
+  } else {
+    const raw = String(body.quantity).trim();
+    if (!/^\d{1,6}(\.\d{1,3})?$/.test(raw)) {
+      results.push({ error: 'quantity must be a number with at most three decimals.' });
+      values.quantity = '1';
+    } else {
+      values.quantity = String(Number(raw));
+    }
+  }
+
+  // `tags` bleibt die woertliche, kommagetrennte Liste der Quelle. Leer -> NULL,
+  // nicht '' - "keine Schlagworte" ist Abwesenheit, kein leerer Text.
+  if (body.tags === null || body.tags === undefined || String(body.tags).trim() === '') {
+    values.tags = null;
+  } else {
+    const list = String(body.tags).split(',').map((t) => t.trim()).filter(Boolean);
+    if (list.some((t) => t.length > 40)) results.push({ error: 'Each tag must be at most 40 characters.' });
+    if (list.length > 20) results.push({ error: 'At most 20 tags are allowed.' });
+    values.tags = list.length ? list.join(', ') : null;
   }
 
   const vPurchaseDate = date(body.purchase_date, 'purchase_date');
@@ -564,15 +591,15 @@ router.post('/', (req, res) => {
           (name, brand, model, serial_number, category, location_id, purchase_date,
            purchase_price, currency, vendor, warranty_months, condition,
            status, notes, photo_data, account_username, odometer, odometer_unit, odometer_on,
-           kind, container_id, created_by)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           kind, container_id, quantity, tags, created_by)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         values.name, values.brand, values.model, values.serial_number, values.category,
         values.location_id, values.purchase_date, values.purchase_price,
         values.currency, values.vendor, values.warranty_months, values.condition, values.status,
         values.notes, values.photo_data, values.account_username,
         values.odometer, values.odometer_unit, values.odometer_on,
-        values.kind, values.container_id, userId,
+        values.kind, values.container_id, values.quantity, values.tags, userId,
       );
 
       syncReminder({
@@ -647,7 +674,7 @@ router.put('/:id', (req, res) => {
             purchase_date = ?, purchase_price = ?, currency = ?, vendor = ?,
             warranty_months = ?, condition = ?, status = ?, notes = ?, photo_data = ?,
             account_username = ?, odometer = ?, odometer_unit = ?, odometer_on = ?,
-            kind = ?, container_id = ?
+            kind = ?, container_id = ?, quantity = ?, tags = ?
         WHERE id = ?
       `).run(
         values.name, values.brand, values.model, values.serial_number, values.category,
@@ -655,7 +682,7 @@ router.put('/:id', (req, res) => {
         values.currency, values.vendor, values.warranty_months, values.condition, values.status,
         values.notes, values.photo_data, values.account_username,
         values.odometer, values.odometer_unit, values.odometer_on,
-        values.kind, values.container_id, item.id,
+        values.kind, values.container_id, values.quantity, values.tags, item.id,
       );
 
       syncReminder({

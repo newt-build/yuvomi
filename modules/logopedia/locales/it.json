@@ -13,12 +13,10 @@
   "summaryDone": "{count} parole fatte.",
   "summaryAgain": "Da riprovare la prossima volta:",
   "newSession": "Nuova sessione",
-  "focus": {
-    "tr_dr": "TR · DR",
-    "pr_br": "PR · BR",
-    "cr_gr_fr": "CR · GR · FR",
-    "r_iniziale": "R all'inizio",
-    "r_intervocalica": "R tra due vocali",
-    "rr_doppia": "RR doppia"
-  }
+  "focus.tr_dr": "TR · DR",
+  "focus.pr_br": "PR · BR",
+  "focus.cr_gr_fr": "CR · GR · FR",
+  "focus.r_iniziale": "R all'inizio",
+  "focus.r_intervocalica": "R tra due vocali",
+  "focus.rr_doppia": "RR doppia"
 }

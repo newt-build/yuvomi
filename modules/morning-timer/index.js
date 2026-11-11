@@ -1,82 +1,93 @@
 /**
- * Modul: Timer mattutino (modulo custom Yuvomi, famiglia AgentOS)
- * Zweck: Die Morgenroutine als Sequenz von Schritten mit eigenem Countdown und
- *        einem absoluten Limit. "Fatto" ist eine ausdrueckliche Handlung des
- *        Kindes, kein automatisches Ablaufen.
+ * Modul: Morgen-Timer (Modul des Familien-Forks, KEIN Kern-Patch)
+ * Zweck: Die Morgenroutine als Abfolge von Schritten mit eigenem Countdown,
+ *        einem echten Ausgangszeitpunkt (Deadline) und einem Abschluss, der
+ *        sagt, ob es gereicht hat.
  *
- * ── WAS DIESER MODUL IST UND WAS NICHT ──────────────────────────────────
+ * ── WAS DIESE FASSUNG KANN (Rückmeldung Gabry, 2026-11-11) ──────────────
  *
- * Er ist ein Modul, keine Aenderung am Kern: der Timer ueberlebt jedes Upgrade
- * des Forks, weil Yuvomi Module aus modules/ laedt, ohne den Kern zu patchen.
+ * Die erste Fassung war ein Abriss: fünf fest verdrahtete Schritte und eine
+ * erfundene 25-Minuten-Grenze. Diese Fassung hat, was der Familien-Timer des
+ * AgentOS auch hat, soweit es ohne Server geht:
  *
- * DER ZUSTAND LIEGT AUF DEM GERAET (localStorage), wie beim Wandtimer des
- * Kerns. Das ist eine bewusste Grenze des ersten Increments: kein Server, keine
- * geraeteuebergreifende Anzeige, und vor allem KEINE Punkte, keine Mission und
- * kein Preiseintrag. Ein abgelaufener Countdown erledigt nichts - nur "Fatto".
- * Wer den Schritt oeffnet, findet ihn nach einem Neuladen wieder vor.
+ *   - Schritte, die der Haushalt selbst anlegt und ändert (Name, Minuten, Art);
+ *   - Dauerarten: fest, komprimierbar (mit Untergrenze), flexibel, optional;
+ *   - eine echte Ausgangszeit statt einer erfundenen Gesamtgrenze;
+ *   - pro Schritt ein eigener Countdown und die Restzeit bis zum Ausgang;
+ *   - „Fatto" als einzige Handlung, die einen Schritt schließt - Ablaufen
+ *     schließt nichts und bestraft nichts;
+ *   - komprimierbare Schritte schrumpfen, wenn der Start spät war, aber nie
+ *     unter ihre Untergrenze;
+ *   - ein Abschluss mit Uhrzeit und dem Satz, ob es vor oder nach dem Ausgang war;
+ *   - Wiederaufnahme nach Neuladen, stummschaltbarer Ton.
  *
- * ── ZEIT IST NUR EIN ENDPUNKT ───────────────────────────────────────────
+ * ── WAS SIE WEITERHIN NICHT KANN, UND WARUM ─────────────────────────────
  *
- * Gespeichert wird der Endzeitpunkt des laufenden Schritts und der Startzeit-
- * punkt des Laufs. Alles andere (Restzeit, ob das Limit ueberschritten ist)
- * wird bei jedem Aufbau neu gerechnet. Ein Zustand im DOM waere beim naechsten
- * Aufbau weg, einer im Modul beim naechsten Laden der Seite.
+ * Der Zustand liegt auf dem Gerät (localStorage), nicht auf dem Server. Damit
+ * gibt es keine geräteübergreifende Anzeige, keine Punkte, keine Mission und
+ * keinen Preiseintrag: ein Timer, der auf einem Gerät läuft, kann keine
+ * Belohnung im Haushalt auslösen, ohne dass ein Server die Wahrheit hält.
+ * Das ist die bewusste Grenze dieser Ausbaustufe, nicht ein Versehen.
  */
 
 import { t } from '/i18n.js';
 import { esc } from '/utils/html.js';
 
-const STATE_KEY = 'yuvomi-morning-timer';
+const CONFIG_KEY = 'yuvomi-morning-timer-config';
+const RUN_KEY = 'yuvomi-morning-timer-run';
 const SOUND_KEY = 'yuvomi-morning-timer-sound';
 
-/** Die Schritte der Routine. Reihenfolge = Reihenfolge des Morgens. */
-const STEPS = [
-  { id: 'wake', labelKey: 'stepWake', seconds: 300, icon: 'sun' },
-  { id: 'teeth', labelKey: 'stepTeeth', seconds: 240, icon: 'sparkles' },
-  { id: 'dress', labelKey: 'stepDress', seconds: 300, icon: 'shirt' },
-  { id: 'bag', labelKey: 'stepBag', seconds: 180, icon: 'backpack' },
-  { id: 'shoes', labelKey: 'stepShoes', seconds: 120, icon: 'footprints' },
-];
+const KINDS = ['fixed', 'compressible', 'flexible', 'optional'];
 
-/** Das absolute Limit des ganzen Morgens, in Minuten. */
-const ABSOLUTE_LIMIT_MINUTES = 25;
+/** Voreinstellung: eine gewöhnliche Schulmorgen-Routine. */
+const DEFAULT_CONFIG = {
+  participant: '',
+  leaveAt: '07:50',
+  steps: [
+    { id: 's1', label: 'Svegliarsi e alzarsi', minutes: 5, kind: 'fixed', minimum: null },
+    { id: 's2', label: 'Lavarsi i denti', minutes: 4, kind: 'compressible', minimum: 2 },
+    { id: 's3', label: 'Vestirsi', minutes: 6, kind: 'compressible', minimum: 3 },
+    { id: 's4', label: 'Colazione', minutes: 8, kind: 'compressible', minimum: 4 },
+    { id: 's5', label: 'Zaino e scarpe', minutes: 4, kind: 'fixed', minimum: null },
+    { id: 's6', label: 'Gioco finale', minutes: 5, kind: 'optional', minimum: null },
+  ],
+};
 
-function readState() {
+function readJson(key, fallback) {
   try {
-    const raw = localStorage.getItem(STATE_KEY);
-    if (!raw) return null;
+    const raw = localStorage.getItem(key);
+    if (!raw) return fallback;
     const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== 'object') return null;
-    return parsed;
-  } catch {
-    return null;
-  }
+    return parsed && typeof parsed === 'object' ? parsed : fallback;
+  } catch { return fallback; }
 }
-
-function writeState(state) {
+function writeJson(key, value) {
   try {
-    if (state === null) localStorage.removeItem(STATE_KEY);
-    else localStorage.setItem(STATE_KEY, JSON.stringify(state));
-  } catch { /* privater Modus: Timer laeuft trotzdem, nur ohne Wiederaufnahme */ }
-}
-
-function readSound() {
-  try { return localStorage.getItem(SOUND_KEY) !== 'off'; } catch { return true; }
-}
-function writeSound(on) {
-  try { localStorage.setItem(SOUND_KEY, on ? 'on' : 'off'); } catch { /* egal */ }
+    if (value === null) localStorage.removeItem(key);
+    else localStorage.setItem(key, JSON.stringify(value));
+  } catch { /* privater Modus: der Timer läuft weiter, nur ohne Wiederaufnahme */ }
 }
 
 function mmss(totalSeconds) {
   const s = Math.max(0, Math.round(totalSeconds));
-  const m = Math.floor(s / 60);
-  return `${m}:${String(s % 60).padStart(2, '0')}`;
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 }
 
-/**
- * Ein kurzer Ton am Schrittende. Kein Audio-File, kein CDN: ein Oszillator,
- * damit das Modul keine zweite Ressource braucht und offline bleibt.
- */
+function clockOf(instant) {
+  return new Intl.DateTimeFormat('it-IT', { hour: '2-digit', minute: '2-digit' }).format(new Date(instant));
+}
+
+/** Der Ausgang als Zeitpunkt von heute (oder morgen, wenn er schon vorbei ist). */
+function deadlineFor(leaveAt, from = Date.now()) {
+  const [h, m] = String(leaveAt || '07:50').split(':').map((x) => Number(x));
+  const d = new Date(from);
+  d.setHours(Number.isFinite(h) ? h : 7, Number.isFinite(m) ? m : 50, 0, 0);
+  return d.getTime();
+}
+
+function readSound() { try { return localStorage.getItem(SOUND_KEY) !== 'off'; } catch { return true; } }
+function writeSound(on) { try { localStorage.setItem(SOUND_KEY, on ? 'on' : 'off'); } catch { /* egal */ } }
+
 function beep() {
   if (!readSound()) return;
   try {
@@ -95,9 +106,34 @@ function beep() {
   } catch { /* Ton ist nicht kritisch */ }
 }
 
+/**
+ * Wie viel Zeit der aktuelle Schritt bekommt.
+ *
+ * Ein `compressible` Schritt schrumpft, wenn der Start spät war - aber nur so
+ * weit, wie es noch Platz gibt, und nie unter seine Untergrenze. Was danach
+ * noch an Pflichtschritten kommt, bleibt reserviert: sonst würde der letzte
+ * Schritt die Verspätung aller vorherigen erben.
+ */
+function stepBudget(step, remainingToDeadline, pendingAfter) {
+  const planned = step.minutes * 60;
+  if (step.kind !== 'compressible' && step.kind !== 'flexible') return planned;
+  if (step.kind === 'flexible') return planned;
+  const free = remainingToDeadline - pendingAfter;
+  const floor = (step.minimum ?? 0) * 60;
+  if (free >= planned) return planned;
+  return Math.max(floor, free);
+}
+
+/** Summe der reservierten Zeit aller noch offenen Pflichtschritte nach `index`. */
+function pendingAfterSeconds(steps, index) {
+  return steps.slice(index + 1)
+    .filter((s) => s.kind !== 'optional')
+    .reduce((sum, s) => sum + (s.kind === 'compressible' ? (s.minimum ?? 0) * 60 : s.minutes * 60), 0);
+}
+
 export async function render(container, context) {
   const { signal } = context;
-  let timer = null;
+  let tick = null;
   let soundOn = readSound();
 
   container.replaceChildren();
@@ -105,133 +141,289 @@ export async function render(container, context) {
     <div class="page-toolbar page-toolbar--narrow">
       <h1 class="page-toolbar__title">${esc(t('extensions.morning-timer.title'))}</h1>
       <div class="page-toolbar__actions">
-        <button type="button" class="btn btn--secondary btn--sm" data-timer-sound aria-pressed="${soundOn}">
+        <button type="button" class="btn btn--secondary btn--sm" data-sound aria-pressed="${soundOn}">
           <i data-lucide="${soundOn ? 'volume-2' : 'volume-x'}" class="icon-sm" aria-hidden="true"></i>
           <span data-sound-label>${esc(t(`extensions.morning-timer.${soundOn ? 'soundOn' : 'soundOff'}`))}</span>
         </button>
       </div>
     </div>
     <div class="app-page__body">
-      <section class="page-section page-measure morning-timer" data-timer-root></section>
+      <section class="page-section page-measure mt" data-root></section>
     </div>`);
   if (window.lucide) window.lucide.createIcons({ el: container });
 
-  const root = container.querySelector('[data-timer-root]');
-  const soundButton = container.querySelector('[data-timer-sound]');
+  const root = container.querySelector('[data-root]');
+  const soundBtn = container.querySelector('[data-sound]');
 
-  soundButton?.addEventListener('click', () => {
+  soundBtn?.addEventListener('click', () => {
     soundOn = !soundOn;
     writeSound(soundOn);
-    soundButton.setAttribute('aria-pressed', String(soundOn));
-    soundButton.querySelector('i')?.setAttribute('data-lucide', soundOn ? 'volume-2' : 'volume-x');
-    const label = soundButton.querySelector('[data-sound-label]');
+    soundBtn.setAttribute('aria-pressed', String(soundOn));
+    soundBtn.querySelector('i')?.setAttribute('data-lucide', soundOn ? 'volume-2' : 'volume-x');
+    const label = soundBtn.querySelector('[data-sound-label]');
     if (label) label.textContent = t(`extensions.morning-timer.${soundOn ? 'soundOn' : 'soundOff'}`);
-    if (window.lucide) window.lucide.createIcons({ el: soundButton });
+    if (window.lucide) window.lucide.createIcons({ el: soundBtn });
   }, { signal });
 
-  /** Neuzeichnen: rechnet alles aus dem gespeicherten Zustand. */
+  function config() {
+    const cfg = readJson(CONFIG_KEY, null) ?? DEFAULT_CONFIG;
+    return { ...DEFAULT_CONFIG, ...cfg, steps: Array.isArray(cfg.steps) && cfg.steps.length ? cfg.steps : DEFAULT_CONFIG.steps };
+  }
+
   function paint() {
-    const state = readState();
     if (!root.isConnected) return;
+    const run = readJson(RUN_KEY, null);
+    if (run?.startedAt) paintRun(run, config());
+    else paintSetup(config());
+  }
 
-    if (!state) {
-      root.replaceChildren();
-      root.insertAdjacentHTML('beforeend', `
-        <p class="morning-timer__intro">${esc(t('extensions.morning-timer.intro'))}</p>
-        <ol class="morning-timer__steps">
-          ${STEPS.map((s) => `
-            <li class="morning-timer__step">
-              <i data-lucide="${esc(s.icon)}" class="icon-md" aria-hidden="true"></i>
-              <span>${esc(t(`extensions.morning-timer.${s.labelKey}`))}</span>
-              <span class="morning-timer__budget">${esc(mmss(s.seconds))}</span>
-            </li>`).join('')}
-        </ol>
-        <button type="button" class="btn btn--primary morning-timer__start" data-timer-start>
-          <i data-lucide="play" class="icon-md" aria-hidden="true"></i>
-          ${esc(t('extensions.morning-timer.start'))}
-        </button>`);
-      if (window.lucide) window.lucide.createIcons({ el: root });
-      root.querySelector('[data-timer-start]')?.addEventListener('click', start, { signal });
-      return;
-    }
-
-    const now = Date.now();
-    const done = new Set(state.done ?? []);
-    const elapsedOverall = (now - state.startedAt) / 1000;
-    const overLimit = elapsedOverall > ABSOLUTE_LIMIT_MINUTES * 60;
-    const currentIndex = STEPS.findIndex((s) => !done.has(s.id));
-
+  // ── Einrichtung ────────────────────────────────────────────────────────
+  function paintSetup(cfg) {
     root.replaceChildren();
     root.insertAdjacentHTML('beforeend', `
-      <div class="morning-timer__head ${overLimit ? 'morning-timer__head--over' : ''}">
-        <span class="morning-timer__head-label">${esc(t(overLimit ? 'extensions.morning-timer.overLimit' : 'extensions.morning-timer.remaining'))}</span>
-        <span class="morning-timer__head-value">${esc(mmss(ABSOLUTE_LIMIT_MINUTES * 60 - elapsedOverall))}</span>
+      <p class="mt__intro">${esc(t('extensions.morning-timer.intro'))}</p>
+      <div class="mt__setup-row">
+        <label class="mt__field">
+          <span>${esc(t('extensions.morning-timer.participant'))}</span>
+          <input type="text" data-cfg="participant" value="${esc(cfg.participant ?? '')}" placeholder="${esc(t('extensions.morning-timer.participantPlaceholder'))}">
+        </label>
+        <label class="mt__field">
+          <span>${esc(t('extensions.morning-timer.leaveAt'))}</span>
+          <input type="time" data-cfg="leaveAt" value="${esc(cfg.leaveAt)}">
+        </label>
       </div>
-      <ol class="morning-timer__steps">
-        ${STEPS.map((s, index) => {
-          const isDone = done.has(s.id);
-          const isCurrent = index === currentIndex && !isDone;
-          const remaining = isCurrent && state.stepEndsAt ? (state.stepEndsAt - now) / 1000 : null;
-          const stepOver = remaining != null && remaining <= 0;
-          return `
-            <li class="morning-timer__step ${isDone ? 'is-done' : ''} ${isCurrent ? 'is-current' : ''} ${stepOver ? 'is-over' : ''}">
-              <i data-lucide="${isDone ? 'check' : esc(s.icon)}" class="icon-md" aria-hidden="true"></i>
-              <span class="morning-timer__step-label">${esc(t(`extensions.morning-timer.${s.labelKey}`))}</span>
-              <span class="morning-timer__budget">${isCurrent && remaining != null ? esc(mmss(remaining)) : esc(mmss(s.seconds))}</span>
-              ${isCurrent ? `
-                <button type="button" class="btn btn--primary btn--sm" data-timer-done="${esc(s.id)}">
-                  ${esc(t('extensions.morning-timer.done'))}
-                </button>` : ''}
-            </li>`;
-        }).join('')}
-      </ol>
-      ${currentIndex === -1 ? `
-        <p class="morning-timer__finished">${esc(t('extensions.morning-timer.finished'))}</p>` : ''}
-      <button type="button" class="btn btn--secondary btn--sm morning-timer__reset" data-timer-reset>
-        ${esc(t('extensions.morning-timer.reset'))}
-      </button>`);
+      <ul class="mt__steps mt__steps--setup">
+        ${cfg.steps.map((s, i) => `
+          <li class="mt__step mt__step--edit" data-step="${esc(s.id)}">
+            <input type="text" data-step-field="label" data-index="${i}" value="${esc(s.label)}" aria-label="${esc(t('extensions.morning-timer.stepName'))}">
+            <input type="number" min="0" max="120" step="1" data-step-field="minutes" data-index="${i}" value="${esc(String(s.minutes))}" aria-label="${esc(t('extensions.morning-timer.stepMinutes'))}">
+            <select data-step-field="kind" data-index="${i}" aria-label="${esc(t('extensions.morning-timer.stepKind'))}">
+              ${KINDS.map((k) => `<option value="${k}" ${s.kind === k ? 'selected' : ''}>${esc(t(`extensions.morning-timer.kind.${k}`))}</option>`).join('')}
+            </select>
+            <input type="number" min="0" max="120" step="1" data-step-field="minimum" data-index="${i}"
+                   value="${s.minimum == null ? '' : esc(String(s.minimum))}" placeholder="${esc(t('extensions.morning-timer.stepMinimum'))}"
+                   aria-label="${esc(t('extensions.morning-timer.stepMinimum'))}" ${s.kind === 'compressible' ? '' : 'disabled'}>
+            <button type="button" class="btn btn--danger-outline btn--sm" data-remove="${i}" aria-label="${esc(t('extensions.morning-timer.removeStep'))}">
+              <i data-lucide="trash-2" class="icon-sm" aria-hidden="true"></i>
+            </button>
+          </li>`).join('')}
+      </ul>
+      <div class="mt__setup-actions">
+        <button type="button" class="btn btn--secondary btn--sm" data-add-step>
+          <i data-lucide="plus" class="icon-sm" aria-hidden="true"></i>${esc(t('extensions.morning-timer.addStep'))}
+        </button>
+        <button type="button" class="btn btn--primary" data-start>
+          <i data-lucide="play" class="icon-md" aria-hidden="true"></i>${esc(t('extensions.morning-timer.start'))}
+        </button>
+      </div>`);
     if (window.lucide) window.lucide.createIcons({ el: root });
 
-    root.querySelectorAll('[data-timer-done]').forEach((btn) => {
-      btn.addEventListener('click', () => complete(btn.getAttribute('data-timer-done')), { signal });
+    const save = () => {
+      const next = {
+        participant: root.querySelector('[data-cfg="participant"]').value.trim(),
+        leaveAt: root.querySelector('[data-cfg="leaveAt"]').value || '07:50',
+        steps: cfg.steps,
+      };
+      writeJson(CONFIG_KEY, next);
+    };
+
+    root.querySelector('[data-cfg="participant"]')?.addEventListener('change', save, { signal });
+    root.querySelector('[data-cfg="leaveAt"]')?.addEventListener('change', () => { save(); }, { signal });
+
+    root.querySelectorAll('[data-step-field]').forEach((el) => {
+      el.addEventListener('change', () => {
+        const i = Number(el.getAttribute('data-index'));
+        const field = el.getAttribute('data-step-field');
+        const step = cfg.steps[i];
+        if (!step) return;
+        if (field === 'minutes' || field === 'minimum') {
+          const v = el.value === '' ? null : Math.max(0, Math.min(120, Number(el.value)));
+          step[field] = v;
+        } else if (field === 'kind') {
+          step.kind = KINDS.includes(el.value) ? el.value : 'fixed';
+          save();
+          paintSetup(config());
+          return;
+        } else {
+          step[field] = el.value.trim() || t('extensions.morning-timer.untitledStep');
+        }
+        save();
+      }, { signal });
     });
-    root.querySelector('[data-timer-reset]')?.addEventListener('click', () => {
-      writeState(null);
+
+    root.querySelectorAll('[data-remove]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const i = Number(btn.getAttribute('data-remove'));
+        cfg.steps.splice(i, 1);
+        save();
+        paintSetup(config());
+      }, { signal });
+    });
+
+    root.querySelector('[data-add-step]')?.addEventListener('click', () => {
+      cfg.steps.push({ id: `s${Date.now()}`, label: t('extensions.morning-timer.newStep'), minutes: 5, kind: 'fixed', minimum: null });
+      save();
+      paintSetup(config());
+    }, { signal });
+
+    root.querySelector('[data-start]')?.addEventListener('click', () => {
+      const c = config();
+      const startedAt = Date.now();
+      const deadline = deadlineFor(c.leaveAt, startedAt);
+      const first = c.steps[0];
+      const budget = first
+        ? (first.kind === 'optional'
+          ? first.minutes * 60
+          : stepBudget(first, (deadline - startedAt) / 1000, pendingAfterSeconds(c.steps, 0)))
+        : 0;
+      writeJson(RUN_KEY, {
+        startedAt, deadline, done: [], skipped: [],
+        stepStartedAt: startedAt, stepEndsAt: startedAt + budget * 1000,
+      });
       paint();
     }, { signal });
   }
 
-  function start() {
+  // ── Lauf ───────────────────────────────────────────────────────────────
+  function paintRun(run, cfg) {
     const now = Date.now();
-    const first = STEPS[0];
-    writeState({ startedAt: now, stepEndsAt: now + first.seconds * 1000, done: [] });
-    paint();
+    const done = new Set(run.done ?? []);
+    const skipped = new Set(run.skipped ?? []);
+    const steps = cfg.steps;
+    const currentIndex = steps.findIndex((s) => !done.has(s.id) && !skipped.has(s.id));
+    const remainingToDeadline = (run.deadline - now) / 1000;
+    const elapsedOverall = (now - run.startedAt) / 1000;
+    const step = currentIndex >= 0 ? steps[currentIndex] : null;
+
+    // BUDGET WIRD EINMAL BEIM SCHRITTSTART GERECHNET, NICHT BEI JEDEM TAKT.
+    // Sonst schrumpfte die Restzeit mit der Restzeit: wer 40 Sekunden zusieht,
+    // verloere mehr als 40 Sekunden Countdown, weil das Budget aus dem bereits
+    // geschmolzenen Rest neu berechnet wuerde. `stepEndsAt` ist der Anker und
+    // steht im gespeicherten Lauf.
+    let stepEndsAt = run.stepEndsAt ?? null;
+    if (step && stepEndsAt == null) {
+      const budget = step.kind === 'optional'
+        ? step.minutes * 60
+        : stepBudget(step, remainingToDeadline, pendingAfterSeconds(steps, currentIndex));
+      stepEndsAt = (run.stepStartedAt ?? run.startedAt) + budget * 1000;
+    }
+    const stepRemaining = step && stepEndsAt ? (stepEndsAt - now) / 1000 : null;
+    const finished = currentIndex === -1;
+
+    root.replaceChildren();
+    root.insertAdjacentHTML('beforeend', `
+      <div class="mt__head ${remainingToDeadline <= 0 ? 'mt__head--over' : ''}">
+        <div>
+          <span class="mt__head-label">${esc(t('extensions.morning-timer.leaveAt'))}</span>
+          <span class="mt__head-value">${esc(clockOf(run.deadline))}</span>
+        </div>
+        <div>
+          <span class="mt__head-label">${esc(t(remainingToDeadline <= 0 ? 'extensions.morning-timer.overLimit' : 'extensions.morning-timer.remaining'))}</span>
+          <span class="mt__head-value">${esc(remainingToDeadline <= 0 ? `+${mmss(-remainingToDeadline)}` : mmss(remainingToDeadline))}</span>
+        </div>
+        <div>
+          <span class="mt__head-label">${esc(t('extensions.morning-timer.elapsed'))}</span>
+          <span class="mt__head-value">${esc(mmss(elapsedOverall))}</span>
+        </div>
+        ${cfg.participant ? `<div><span class="mt__head-label">${esc(t('extensions.morning-timer.participant'))}</span><span class="mt__head-value">${esc(cfg.participant)}</span></div>` : ''}
+      </div>
+
+      ${finished ? renderSummary(run, cfg) : `
+        <ol class="mt__steps">
+          ${steps.map((s, i) => {
+            const isDone = done.has(s.id);
+            const isSkipped = skipped.has(s.id);
+            const isCurrent = i === currentIndex;
+            const over = isCurrent && stepRemaining != null && stepRemaining <= 0;
+            return `
+              <li class="mt__step ${isDone ? 'is-done' : ''} ${isSkipped ? 'is-skipped' : ''} ${isCurrent ? 'is-current' : ''} ${over ? 'is-over' : ''}">
+                <span class="mt__step-mark" aria-hidden="true">${isDone ? '✓' : isSkipped ? '–' : i + 1}</span>
+                <span class="mt__step-label">${esc(s.label)}</span>
+                <span class="mt__step-meta">
+                  ${isCurrent && stepRemaining != null
+                    ? `<strong>${esc(stepRemaining <= 0 ? `+${mmss(-stepRemaining)}` : mmss(stepRemaining))}</strong>`
+                    : `<span>${esc(String(s.minutes))}′</span>`}
+                  <span class="mt__step-kind">${esc(t(`extensions.morning-timer.kind.${s.kind}`))}</span>
+                </span>
+                ${isCurrent ? `
+                  <span class="mt__step-actions">
+                    <button type="button" class="btn btn--primary btn--sm" data-done="${esc(s.id)}">${esc(t('extensions.morning-timer.done'))}</button>
+                    ${s.kind === 'optional' ? `<button type="button" class="btn btn--secondary btn--sm" data-skip="${esc(s.id)}">${esc(t('extensions.morning-timer.skip'))}</button>` : ''}
+                  </span>` : ''}
+              </li>`;
+          }).join('')}
+        </ol>`}
+
+      <div class="mt__foot">
+        <button type="button" class="btn btn--secondary btn--sm" data-restart>${esc(t('extensions.morning-timer.reset'))}</button>
+        <button type="button" class="btn btn--secondary btn--sm" data-edit>${esc(t('extensions.morning-timer.editRoutine'))}</button>
+      </div>`);
+    if (window.lucide) window.lucide.createIcons({ el: root });
+
+    root.querySelectorAll('[data-done]').forEach((btn) => btn.addEventListener('click', () => close(btn.getAttribute('data-done'), 'done'), { signal }));
+    root.querySelectorAll('[data-skip]').forEach((btn) => btn.addEventListener('click', () => close(btn.getAttribute('data-skip'), 'skip'), { signal }));
+    root.querySelector('[data-restart]')?.addEventListener('click', () => { writeJson(RUN_KEY, null); paint(); }, { signal });
+    root.querySelector('[data-edit]')?.addEventListener('click', () => { writeJson(RUN_KEY, null); paint(); }, { signal });
   }
 
-  /** "Fatto": der einzige Weg, einen Schritt zu beenden. Ablaufen erledigt nichts. */
-  function complete(stepId) {
-    const state = readState();
-    if (!state) return;
-    const done = new Set(state.done ?? []);
-    done.add(stepId);
-    const next = STEPS.find((s) => !done.has(s.id));
+  function renderSummary(run, cfg) {
+    const finishedAt = run.finishedAt ?? Date.now();
+    const within = finishedAt <= run.deadline;
+    const skippedCount = (run.skipped ?? []).length;
+    const doneCount = (run.done ?? []).length;
+    return `
+      <div class="mt__summary ${within ? 'mt__summary--ok' : 'mt__summary--late'}">
+        <p class="mt__summary-title">${esc(t(within ? 'extensions.morning-timer.summaryWithin' : 'extensions.morning-timer.summaryLate')
+          .replace('{time}', clockOf(finishedAt))
+          .replace('{leaveAt}', clockOf(run.deadline)))}</p>
+        <p class="mt__summary-line">${esc(t('extensions.morning-timer.summarySteps')
+          .replace('{done}', String(doneCount))
+          .replace('{total}', String(cfg.steps.length))
+          .replace('{skipped}', String(skippedCount)))}</p>
+        ${cfg.participant ? `<p class="mt__summary-line">${esc(cfg.participant)}</p>` : ''}
+      </div>`;
+  }
+
+  /** „Fatto" (und Überspringen eines optionalen Schritts) - der einzige Weg weiter. */
+  function close(stepId, mode) {
+    const run = readJson(RUN_KEY, null);
+    if (!run?.startedAt) return;
+    const done = new Set(run.done ?? []);
+    const skipped = new Set(run.skipped ?? []);
+    if (mode === 'skip') skipped.add(stepId); else done.add(stepId);
+
+    const cfg = config();
+    const remaining = cfg.steps.filter((s) => !done.has(s.id) && !skipped.has(s.id));
     const now = Date.now();
-    writeState({
-      ...state,
+    // Der naechste Schritt bekommt sein Budget JETZT, einmalig, mit der dann
+    // gueltigen Restzeit bis zum Ausgang - nicht bei jedem Takt neu.
+    let nextEndsAt = null;
+    if (remaining.length) {
+      const next = remaining[0];
+      const index = cfg.steps.findIndex((s) => s.id === next.id);
+      const budget = next.kind === 'optional'
+        ? next.minutes * 60
+        : stepBudget(next, (run.deadline - now) / 1000, pendingAfterSeconds(cfg.steps, index));
+      nextEndsAt = now + budget * 1000;
+    }
+
+    writeJson(RUN_KEY, {
+      ...run,
       done: [...done],
-      stepEndsAt: next ? now + next.seconds * 1000 : null,
+      skipped: [...skipped],
+      stepStartedAt: now,
+      stepEndsAt: nextEndsAt,
+      finishedAt: remaining.length ? null : now,
     });
-    beep();
+    if (mode === 'done') beep();
     paint();
   }
 
-  // Ein Takt genuegt: paint() rechnet aus dem Zustand, ein Zustand im DOM gibt
-  // es nicht. Bei jedem Takt wird nur die Anzeige aktualisiert.
-  timer = setInterval(() => {
-    if (!root.isConnected) { clearInterval(timer); return; }
+  tick = setInterval(() => {
+    if (!root.isConnected) { clearInterval(tick); return; }
     paint();
   }, 1000);
-  signal.addEventListener('abort', () => clearInterval(timer), { once: true });
+  signal.addEventListener('abort', () => clearInterval(tick), { once: true });
 
   paint();
 }

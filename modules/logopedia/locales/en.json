@@ -13,12 +13,10 @@
   "summaryDone": "{count} words done.",
   "summaryAgain": "To practise again next time:",
   "newSession": "New session",
-  "focus": {
-    "tr_dr": "TR · DR",
-    "pr_br": "PR · BR",
-    "cr_gr_fr": "CR · GR · FR",
-    "r_iniziale": "R at the start",
-    "r_intervocalica": "R between vowels",
-    "rr_doppia": "Double RR"
-  }
+  "focus.tr_dr": "TR · DR",
+  "focus.pr_br": "PR · BR",
+  "focus.cr_gr_fr": "CR · GR · FR",
+  "focus.r_iniziale": "R at the start",
+  "focus.r_intervocalica": "R between vowels",
+  "focus.rr_doppia": "Double RR"
 }

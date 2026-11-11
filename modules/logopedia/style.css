@@ -4,28 +4,55 @@
 
 .logopedia__focuses {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
   gap: var(--space-3, 0.75rem);
 }
 
+/* Eigene Karte statt .btn: .btn ist eine Pille mit nowrap, und ein zweizeiliger
+ * Inhalt darin ueberlappt (im Screenshot gesehen). Hier ist der Kasten ein
+ * Block mit zwei Zeilen, der umbrechen darf. */
 .logopedia__focus {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.25rem;
-  padding: var(--space-4, 1rem);
-  text-align: left;
+  gap: 0.3rem;
+  min-width: 0;
   min-height: 44px;
+  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border-radius: var(--radius-lg, 14px);
+  border: 1px solid var(--border-subtle, #e5e7eb);
+  background: var(--surface-raised, #fff);
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
-.logopedia__focus-title { font-weight: 600; }
-.logopedia__focus-count { font-size: 0.85rem; color: var(--text-muted, #5b6472); }
+.logopedia__focus:hover { border-color: var(--active-module-accent, #0D9488); }
+.logopedia__focus:focus-visible { outline: 2px solid var(--active-module-accent, #0D9488); outline-offset: 2px; }
+
+.logopedia__focus-title {
+  display: block;
+  width: 100%;
+  font-weight: 600;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.logopedia__focus-count {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-muted, #5b6472);
+}
 
 .logopedia__session-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3, 0.75rem);
+  flex-wrap: wrap;
 }
 
 .logopedia__progress { font-size: 0.9rem; color: var(--text-muted, #5b6472); }
@@ -72,4 +99,5 @@
 
 @media (max-width: 480px) {
   .logopedia__actions > .btn { flex: 1 1 100%; }
+  .logopedia__focuses { grid-template-columns: 1fr; }
 }

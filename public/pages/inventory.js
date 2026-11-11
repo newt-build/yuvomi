@@ -1236,6 +1236,8 @@ function renderItemDetail(item, history, onDoneTrackedDate, historyLoadFailed) {
         { icon: 'building-2', label: t('inventory.brandLabel'), value: item.brand || '' },
         { icon: 'package', label: t('inventory.modelLabel'), value: item.model || '' },
         { icon: 'hash', label: t('inventory.serialNumberLabel'), value: item.serial_number || '' },
+        { icon: 'layers', label: t('inventory.quantityLabel'), value: item.quantity != null ? String(item.quantity) : '' },
+        { icon: 'tag', label: t('inventory.tagsLabel'), value: item.tags || '' },
         { icon: 'calendar', label: t('inventory.purchaseDateLabel'), value: item.purchase_date ? dateText(item.purchase_date) : '' },
         { icon: 'banknote', label: t('inventory.purchasePriceLabel'), value: canSeeInventoryPrices() && item.purchase_price != null ? formatMoney(item.purchase_price, item.currency) : '' },
         { icon: 'store', label: t('inventory.vendorLabel'), value: item.vendor || '' },
@@ -2011,6 +2013,17 @@ function buildItemForm({ mode, item = null }) {
         </div>
         <div class="form-pair form-pair--wide">
           <div class="form-group">
+            <label class="form-label" for="inv-quantity">${esc(t('inventory.quantityLabel'))}</label>
+            <input id="inv-quantity" class="form-input" type="number" min="0" step="0.001" inputmode="decimal">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="inv-tags">${esc(t('inventory.tagsLabel'))}</label>
+            <input id="inv-tags" class="form-input" type="text" autocomplete="off">
+            <p class="form-hint">${esc(t('inventory.tagsHint'))}</p>
+          </div>
+        </div>
+        <div class="form-pair form-pair--wide">
+          <div class="form-group">
             <label class="form-label" for="inv-serial">${esc(t('inventory.serialNumberLabel'))}</label>
             <input id="inv-serial" class="form-input" type="text">
           </div>
@@ -2131,6 +2144,8 @@ function buildItemForm({ mode, item = null }) {
     panel.querySelector('#inv-status').value = isEdit ? item.status : 'active';
     panel.querySelector('#inv-brand').value = isEdit && item.brand ? item.brand : '';
     panel.querySelector('#inv-model').value = isEdit && item.model ? item.model : '';
+    panel.querySelector('#inv-quantity').value = isEdit && item.quantity != null ? String(item.quantity) : '1';
+    panel.querySelector('#inv-tags').value = isEdit && item.tags ? item.tags : '';
     panel.querySelector('#inv-serial').value = isEdit && item.serial_number ? item.serial_number : '';
     panel.querySelector('#inv-vendor').value = isEdit && item.vendor ? item.vendor : '';
     panel.querySelector('#inv-account').value = isEdit && item.account_username ? item.account_username : '';
@@ -2346,6 +2361,8 @@ async function saveItem(panel, mode, item, attachments, pickedBooking, photoData
     brand: panel.querySelector('#inv-brand').value.trim() || null,
     model: panel.querySelector('#inv-model').value.trim() || null,
     serial_number: panel.querySelector('#inv-serial').value.trim() || null,
+    quantity: panel.querySelector('#inv-quantity').value.trim() || '1',
+    tags: panel.querySelector('#inv-tags').value.trim() || null,
     vendor: panel.querySelector('#inv-vendor').value.trim() || null,
     account_username: panel.querySelector('#inv-account').value.trim() || null,
     warranty_months: warrantyRaw === '' ? null : Number(warrantyRaw),

@@ -12040,6 +12040,31 @@ const MIGRATIONS = [
       database.exec('CREATE INDEX IF NOT EXISTS idx_inventory_items_kind ON inventory_items(kind)');
     },
   },
+  {
+    version: 284,
+    description: 'inventory_items: quantity and tags carried over from the family import',
+    // ZWEI FELDER, DIE DER IMPORT SONST VERLIERT (Rueckmeldung Gabry, 2026-11-11):
+    //
+    // `quantity` ist eine Dezimalzahl als TEXT, nicht REAL: der Bestand kennt
+    // halbe Mengen ("0.5 Packung"), und NUMERIC darf nicht in Binaerrundung
+    // kippen. Die Voreinstellung '1' ist der ehrliche Wert fuer einen einzelnen
+    // Gegenstand; 0 aus der Quelle bleibt 0 und wird NICHT stillschweigend zu 1.
+    //
+    // `tags` ist eine kommagetrennte Liste der Schlagworte aus der Quelle
+    // (Costruzioni, Giocattoli, ...). Kein eigenes Tag-System mit Join-Tabelle:
+    // das Modul hat keines, und eine halb gebaute Normalisierung waere schlechter
+    // als die woertliche Liste. Suche und Anzeige lesen sie als Text.
+    up(database) {
+      const cols = database.prepare('PRAGMA table_info(inventory_items)').all();
+      const has = (name) => cols.some((c) => c.name === name);
+      if (!has('quantity')) {
+        database.exec("ALTER TABLE inventory_items ADD COLUMN quantity TEXT NOT NULL DEFAULT '1'");
+      }
+      if (!has('tags')) {
+        database.exec('ALTER TABLE inventory_items ADD COLUMN tags TEXT');
+      }
+    },
+  },
 ];
 
 /**

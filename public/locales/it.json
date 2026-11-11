@@ -6572,7 +6572,10 @@
     "containerNotEmpty": "Il contenitore contiene ancora {count} oggetti.",
     "containerDetachConfirm": "Eliminare il contenitore e lasciare gli oggetti senza contenitore?",
     "inContainer": "in {container}",
-    "containerChildren": "{count} oggetti dentro"
+    "containerChildren": "{count} oggetti dentro",
+    "quantityLabel": "Quantità",
+    "tagsLabel": "Tag",
+    "tagsHint": "Separati da virgola, es. Costruzioni, Giocattoli"
   },
   "documentAttach": {
     "label": "Allegati",

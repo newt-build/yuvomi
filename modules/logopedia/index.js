@@ -87,7 +87,7 @@ export async function render(container, context) {
         <p class="logopedia__intro">${esc(t('extensions.logopedia.intro'))}</p>
         <div class="logopedia__focuses">
           ${FOCUSES.map((f) => `
-            <button type="button" class="btn btn--secondary logopedia__focus" data-focus="${esc(f)}">
+            <button type="button" class="logopedia__focus" data-focus="${esc(f)}">
               <span class="logopedia__focus-title">${esc(t(`extensions.logopedia.focus.${f}`))}</span>
               <span class="logopedia__focus-count">${esc(t('extensions.logopedia.wordCount').replace('{count}', String((WORDS[f] ?? []).length)))}</span>
             </button>`).join('')}

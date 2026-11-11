@@ -6572,7 +6572,10 @@
     "containerNotEmpty": "Der Behälter enthält noch {count} Gegenstand/Gegenstände.",
     "containerDetachConfirm": "Behälter löschen und Gegenstände darin ohne Behälter lassen?",
     "inContainer": "in {container}",
-    "containerChildren": "{count} Gegenstände darin"
+    "containerChildren": "{count} Gegenstände darin",
+    "quantityLabel": "Menge",
+    "tagsLabel": "Schlagworte",
+    "tagsHint": "Kommagetrennt, z. B. Costruzioni, Giocattoli"
   },
   "documentAttach": {
     "label": "Anhänge",

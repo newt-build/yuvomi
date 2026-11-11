@@ -6572,7 +6572,10 @@
     "containerNotEmpty": "The container still holds {count} item(s).",
     "containerDetachConfirm": "Delete the container and leave the items in it without a container?",
     "inContainer": "in {container}",
-    "containerChildren": "{count} item(s) inside"
+    "containerChildren": "{count} item(s) inside",
+    "quantityLabel": "Quantity",
+    "tagsLabel": "Tags",
+    "tagsHint": "Comma separated, e.g. Costruzioni, Giocattoli"
   },
   "documentAttach": {
     "label": "Attachments",
