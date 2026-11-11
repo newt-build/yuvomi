@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 220" width="240" height="220" role="img" aria-labelledby="free-play-title">
+  <title id="free-play-title">Gioco finale</title>
+  <g stroke="#554d49" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+    <ellipse cx="120" cy="198" rx="91" ry="11" fill="#e7ddc9" stroke="none"/>
+    <path d="M64 146Q48 160 57 178Q64 188 85 186L111 190Q119 190 120 183Q120 177 112 175L90 166L85 147Z" fill="#e9a388"/>
+<path d="M77 165Q69 178 90 185L113 190Q119 191 122 186Q124 181 117 177L103 168" fill="#e9a388"/>
+<path d="M57 177Q49 175 47 182Q45 189 55 192L72 192L75 183Z" fill="#fbf7ef"/>
+<rect x="71" y="100" width="16" height="20" rx="6" fill="#f7d9bd"/>
+<path d="M58 124Q46 142 53 155Q56 160 61 157L72 138Z" fill="#f7d9bd"/>
+<path d="M66 111Q79 119 92 111L108 121L102 136L100 134V156Q79 160 58 156V134L56 136L50 121Z" fill="#9ac5db"/>
+<g transform="translate(79 77)">
+      <circle cx="-24" cy="3" r="5" fill="#f7d9bd"/>
+      <circle cx="24" cy="3" r="5" fill="#f7d9bd"/>
+      <ellipse cx="0" cy="0" rx="25" ry="27" fill="#f7d9bd"/>
+      <path d="M-25-2C-29-16-19-29-8-28C-4-35 5-33 10-28C21-30 29-19 26-7L24-1C17-2 11-8 7-13C3-6-6-5-10-10C-14-3-19-2-25-2Z" fill="#6d5849"/>
+      <g fill="#554d49" stroke="none"><circle cx="-8" cy="4" r="2"/><circle cx="8" cy="4" r="2"/></g>
+      <path d="M-5 14Q0 19 6 13" fill="none"/>
+    </g>
+<path d="M101 126L114 142L142 138Q149 138 149 144Q149 149 142 150L115 155Q110 156 107 152L94 141Z" fill="#f7d9bd"/>
+<rect x="144" y="164" width="34" height="32" rx="4" fill="#f5cf7c"/>
+<rect x="147" y="134" width="31" height="30" rx="4" fill="#9ac5db"/>
+<rect x="150" y="107" width="27" height="27" rx="4" fill="#e9a388"/>
+<circle cx="205" cy="178" r="17" fill="#9ac5db"/>
+<path d="M192 167Q208 170 216 188M191 187Q199 176 218 174" fill="none"/>
+<path d="M197 71Q199 79 207 81Q199 83 197 91Q195 83 187 81Q195 79 197 71Z" fill="#f5cf7c"/>
+  </g>
+</svg>

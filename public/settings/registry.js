@@ -117,6 +117,11 @@ export const SETTINGS_SCOPES = Object.freeze(['mine', 'household']);
  * test:settings-admin-gate liest genau diese Form aus dem Quelltext.
  */
 export const SETTINGS_SECTIONS = freezeEntries([
+  {
+    id: 'family-avatars', sheetId: 'family-avatars', scope: 'household',
+    labelKey: 'familyAvatar.title', descriptionKey: 'familyAvatar.description', options: [],
+    adminOnly: false, loader: () => import('/settings/pages/family-avatars.js'),
+  },
   // ── Konto ──────────────────────────────────────────────────────────────────
   {
     id: 'personal-account',
@@ -772,6 +777,7 @@ export const SETTINGS_SECTIONS = freezeEntries([
  * createLeafMark), Statuszeile des Moduls und die Scope-Ueberschriften.
  */
 export const SETTINGS_LEAVES = freezeEntries([
+  { id: 'family-avatars', domainId: 'modules', path: '/settings/avatars', labelKey: 'familyAvatar.title', descriptionKey: 'familyAvatar.description', icon: 'smile' },
   // Konto
   { id: 'personal-account', domainId: 'personal', path: '/settings/personal/account', labelKey: 'settings.pageAccount', descriptionKey: 'settings.pageAccountDescription', ssoOnlyDescriptionKey: 'settings.pageAccountDescriptionSsoOnly', icon: 'circle-user' },
   { id: 'personal-appearance', domainId: 'personal', path: '/settings/personal/appearance', labelKey: 'settings.pageAppearance', descriptionKey: 'settings.pageAppearanceDescription', icon: 'palette' },

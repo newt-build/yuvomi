@@ -78,6 +78,10 @@ import screensaverRouter from './routes/screensaver.js';
 import remindersRouter from './routes/reminders.js';
 import searchRouter from './routes/search.js';
 import familyRouter from './routes/family.js';
+import { createFamilyTimerRouter } from './routes/family-timers.js';
+import { createFamilyAppsRouter } from './routes/family-apps.js';
+import { createFamilyAvatarRouter } from './routes/family-avatars.js';
+import { familyAppFrameSources } from './services/family-apps.js';
 import personAvatarsRouter from './routes/people.js';
 import { isPersonAvatarRead, inlineAvatarUrls } from './services/person-avatar.js';
 // ZWEI IMPORTZEILEN FUER EINE DATEI, ABSICHTLICH. `test:openapi-coverage`
@@ -138,7 +142,7 @@ const getServiceWorkerResponse = FRONTEND.serviceWorker
 // Das prüft die Build-Revision schon beim Start und liefert nach einem neuen
 // Build dennoch die neue Datei ohne manuellen Neustart.
 getServiceWorkerResponse?.();
-const DEFAULT_APP_NAME = 'Yuvomi';
+const DEFAULT_APP_NAME = 'Family';
 
 // Der Vertrag fuer native Clients, als eine Zahl, die jeder vor der Anmeldung
 // lesen darf. Sie steigt nur, wenn ein Client ohne die Aenderung nicht mehr
@@ -170,7 +174,7 @@ app.use(helmet({
       connectSrc: ["'self'"],
       fontSrc: ["'self'"],
       objectSrc: ["'none'"],
-      frameSrc: ["'self'"],
+      frameSrc: [() => familyAppFrameSources(db.get())],
       // upgrade-insecure-requests nur mit HTTPS aktivieren
       upgradeInsecureRequests: isSecure ? [] : null,
     },
@@ -847,6 +851,8 @@ app.use('/api/v1', (req, res, next) => {
   return next();
 });
 app.use('/api/v1/dashboard', dashboardRouter);
+// Before /tasks/:id: timers are native task-domain reports, not task IDs.
+app.use('/api/v1/tasks/timers', createFamilyTimerRouter({ database: db.get() }));
 app.use('/api/v1/tasks', tasksRouter);
 app.use('/api/v1/shopping', shoppingRouter);
 app.use('/api/v1/meals', mealsRouter);
@@ -873,6 +879,8 @@ app.use('/api/v1/preferences', preferencesRouter);
 app.use('/api/v1/screensaver', screensaverRouter);
 app.use('/api/v1/reminders', remindersRouter);
 app.use('/api/v1/search', searchRouter);
+app.use('/api/v1/family-apps', createFamilyAppsRouter({ database: db.get() }));
+app.use('/api/v1/family-avatars', createFamilyAvatarRouter({ database: db.get() }));
 app.use('/api/v1/family', familyRouter);
 app.use('/api/v1/people', personAvatarsRouter);
 // Die Personenliste fuer den Picker eines Tabletts (#1209) haengt VOR dem

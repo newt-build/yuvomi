@@ -9,6 +9,14 @@
  * -------------------------------------------------------- */
 .settings-page { --module-accent: var(--module-settings); }
 
+/* Family character picker: scoped to its settings section. */
+.fa { display: grid; gap: 1rem; }
+.fa__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr)); gap: .75rem; }
+.fa__choice { display: grid; justify-items: center; align-content: start; gap: .5rem; min-height: 9rem; padding: .75rem; border: 2px solid var(--color-border, #dedbd4); border-radius: 1rem; background: var(--color-surface, #fff); color: inherit; font: inherit; cursor: pointer; overflow-wrap: anywhere; }
+.fa__choice[aria-pressed="true"] { border-color: var(--color-primary, #5b32d6); }
+.fa__choice img, .fa__fallback { display: grid; place-items: center; width: 5rem; height: 5rem; object-fit: cover; border-radius: 50%; }
+.fa__choice:focus-visible { outline: 3px solid var(--color-primary, #5b32d6); outline-offset: 3px; }
+
 /* --------------------------------------------------------
    Seiten-Layout
    -------------------------------------------------------- */

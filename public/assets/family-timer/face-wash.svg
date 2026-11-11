@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 220" width="240" height="220" role="img" aria-labelledby="face-wash-title">
+  <title id="face-wash-title">Lavarsi il viso</title>
+  <g stroke="#554d49" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+    <ellipse cx="120" cy="198" rx="91" ry="11" fill="#e7ddc9" stroke="none"/>
+    <path d="M156 141H174L180 192H150Z" fill="#fbf7ef"/>
+<path d="M181 89V80Q181 73 173 73H161Q154 73 154 81V87" fill="#fbf7ef"/>
+<path d="M161 73V66M156 66H166" fill="none"/>
+<path d="M154 96V108M163 98V110" fill="none" stroke="#9ac5db"/>
+<path d="M51 145H93L92 186H78L72 161L66 186H52Z" fill="#e9a388"/><path d="M52 185H66V194H45Q43 187 52 185Z" fill="#fbf7ef"/><path d="M78 185H92Q101 187 99 194H78Z" fill="#fbf7ef"/>
+<rect x="64" y="87" width="16" height="20" rx="6" fill="#f7d9bd"/>
+<path d="M54 113Q43 130 53 146Q58 150 62 144L66 124Z" fill="#f7d9bd"/>
+<path d="M59 99Q72 107 85 99L101 109L95 124L93 122V147Q72 151 51 147V122L49 124L43 109Z" fill="#9ac5db"/>
+<g transform="translate(72 65)">
+      <circle cx="-24" cy="3" r="5" fill="#f7d9bd"/>
+      <circle cx="24" cy="3" r="5" fill="#f7d9bd"/>
+      <ellipse cx="0" cy="0" rx="25" ry="27" fill="#f7d9bd"/>
+      <path d="M-25-2C-29-16-19-29-8-28C-4-35 5-33 10-28C21-30 29-19 26-7L24-1C17-2 11-8 7-13C3-6-6-5-10-10C-14-3-19-2-25-2Z" fill="#6d5849"/>
+      <g fill="#554d49" stroke="none"><circle cx="-8" cy="4" r="2"/><circle cx="8" cy="4" r="2"/></g>
+      <path d="M-5 14Q0 19 6 13" fill="none"/>
+    </g>
+<path d="M91 111L112 119L130 111Q136 109 138 114Q140 118 134 122L115 133Q111 135 106 133L87 125Z" fill="#f7d9bd"/>
+<path d="M119 117H207Q205 141 190 144H137Q122 141 119 117Z" fill="#fbf7ef"/>
+<path d="M125 118Q165 128 201 118" fill="none" stroke="#9ac5db"/>
+<path d="M105 126Q118 119 132 119Q138 119 138 124Q137 129 127 129L114 136Z" fill="#f7d9bd"/>
+<path d="M198 148H219" fill="none"/>
+<path d="M200 149H217V182Q208 188 200 182Z" fill="#f5cf7c"/>
+<path d="M205 156V174" fill="none" stroke="#554d49"/>
+  </g>
+</svg>

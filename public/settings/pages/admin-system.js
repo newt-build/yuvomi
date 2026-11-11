@@ -11,7 +11,7 @@ import {
 import { errorSentence, loadErrorSentence } from '/utils/friendly-error.js';
 
 const APP_NAME_STORAGE_KEY = 'yuvomi-app-name';
-const DEFAULT_APP_NAME = 'Yuvomi';
+const DEFAULT_APP_NAME = 'Family';
 
 function safeStorageSet(key, value) {
   try {

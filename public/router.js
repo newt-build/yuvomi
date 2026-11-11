@@ -5,6 +5,7 @@
  */
 
 import { api, auth, isAbortError } from '/api.js';
+import { mountFamilyApps } from '/components/family-apps.js';
 import { canAccessNavModule, navModuleAccess, setExtensionNavMap } from '/permissions.js';
 import { setExtensionModules, selectThirdPartyModuleList } from '/utils/extension-widgets.js';
 import { initExtensionI18n, moduleDisplayLabel, reloadExtensionLocales } from '/utils/extension-i18n.js';
@@ -132,6 +133,7 @@ const ROUTES = [
   { path: '/pair',     page: '/pages/pair-display.js', requiresAuth: false, module: null, style: AUTH_STYLE, titleKey: 'pairDisplay.title' },
   { path: '/',         page: '/pages/dashboard.js', requiresAuth: true, module: 'dashboard', titleKey: 'dashboard.title' },
   { path: '/tasks',    page: '/pages/tasks.js',     requiresAuth: true, module: 'tasks',     titleKey: 'nav.tasks' },
+  { path: '/timers', page: '/pages/family-timers.js', requiresAuth: true, module: 'tasks', style: '/styles/family-timers.css', titleKey: 'familyTimer.title' },
   { path: '/shopping', page: '/pages/shopping.js',  requiresAuth: true, module: 'shopping',  titleKey: 'nav.shopping' },
   { path: '/meals',    page: '/pages/meals.js',     requiresAuth: true, module: 'meals',     titleKey: 'nav.meals' },
   { path: '/calendar', page: '/pages/calendar.js',  requiresAuth: true, module: 'calendar',  titleKey: 'nav.calendar' },
@@ -159,7 +161,10 @@ const ROUTES = [
 // beide auch nur einen `module:`-Wert tragen.
 const SETTINGS_ROUTES = [
   { path: '/settings', page: '/pages/settings.js', requiresAuth: true, module: 'settings', titleKey: 'nav.settings' },
-  ...SETTINGS_LEAVES.map(({ path }) => ({ path, page: '/pages/settings.js', requiresAuth: true, module: 'settings', titleKey: 'nav.settings' })),
+  ...SETTINGS_LEAVES.map(({ path, id }) => ({ path,
+    page: id === 'family-avatars' ? '/pages/family-avatars.js' : '/pages/settings.js',
+    ...(id === 'family-avatars' ? { style: '/styles/settings.css' } : {}),
+    requiresAuth: true, module: 'settings', titleKey: 'nav.settings' })),
   // Vom IA-Umbau verschobene Blätter: als Route registriert, damit ein alter
   // Bookmark überhaupt matcht. settings.js leitet dann auf den neuen Pfad um.
   ...RENAMED_SETTINGS_SOURCE_PATHS.map((path) => ({ path, page: '/pages/settings.js', requiresAuth: true, module: 'settings', titleKey: 'nav.settings' })),
@@ -727,7 +732,7 @@ const MOBILE_FAVORITE_COUNT = 3;
 // Modul-Blaettern, und die erste, die eine neue Regel (kein Kopf ueber nur
 // einem Eintrag, R19) nicht mitbekommen haette.
 
-const DEFAULT_APP_NAME = 'Yuvomi';
+const DEFAULT_APP_NAME = 'Family';
 const APP_NAME_STORAGE_KEY = 'yuvomi-app-name';
 const APP_VERSION_STORAGE_KEY = 'yuvomi-app-version';
 
@@ -2183,12 +2188,15 @@ async function renderPage(route, previousPath = null, scrollTarget = 0, { signal
 
 /** Baut den Beobachter der Toast-Lage ab (#1160); je Shell-Aufbau einer. */
 let _stopToastPlacement = null;
+let _familyApps = null;
 
 /**
  * App-Shell mit Navigation einmalig aufbauen (nach erstem Login).
  */
 
 function renderAppShell(container) {
+  _familyApps?.destroy();
+  _familyApps = null;
   // Gast und Display teilen sich die schmale Navigation: beide sind
   // Nicht-Mitglieder mit einer festen, kleinen Erlaubnis, und beide haben
   // nichts von Mehr-Menue, Suchleiste und System-Reihe. Was sie
@@ -2600,6 +2608,7 @@ function renderAppShell(container) {
   if (moreSheet)  shellNodes.push(moreSheet);
   shellNodes.push(searchOverlay, routeAnnouncer);
   container.replaceChildren(...shellNodes);
+  if (!isGuest) _familyApps = mountFamilyApps({ familyRoot: container });
   // Der Stapel weicht den Knoepfen offener Dialoge aus (#1160, Begruendung in
   // utils/toast-placement.js). Ein neuer Shell-Aufbau baut einen neuen Stapel,
   // also geht der Beobachter des alten mit.
@@ -4392,6 +4401,8 @@ function navItems({ catalog = false } = {}) {
       { path: '/',         label: t('nav.dashboard'), icon: MODULE_ICON.dashboard, module: 'dashboard' },
       { path: '/calendar', label: t('nav.calendar'),  icon: MODULE_ICON.calendar,  module: 'calendar' },
       { path: '/tasks',    label: t('nav.tasks'),     icon: MODULE_ICON.tasks,     module: 'tasks' },
+      { path: '/timers', label: t('familyTimer.title'), icon: 'timer', module: 'tasks' },
+      { path: '/settings/avatars', label: t('familyAvatar.title'), icon: 'smile', module: 'settings' },
       { path: '/rewards',  label: t('nav.rewards'),   icon: MODULE_ICON.rewards,   module: 'rewards' },
       // DIE HAUSHALTWEITE ABSCHALTUNG GILT AUCH HIER. Was ein Display DARF,
       // steht fest - was es GIBT, entscheidet der Haushalt, und `navigate()`
@@ -4417,6 +4428,7 @@ function navItems({ catalog = false } = {}) {
     // Plan
     { path: '/calendar',  label: t('nav.calendar'),  module: 'calendar',  section: NAV_SECTION.plan },
     { path: '/tasks',     label: t('nav.tasks'),     module: 'tasks',     section: NAV_SECTION.plan },
+    { path: '/timers', label: t('familyTimer.title'), module: 'tasks', section: NAV_SECTION.plan },
     { path: '/rewards',   label: t('nav.rewards'),   module: 'rewards',   section: NAV_SECTION.plan },
     { path: '/notes',     label: t('nav.notes'),     module: 'notes',     section: NAV_SECTION.plan },
     { path: '/schedule',  label: t('nav.schedule'),  module: 'schedule',  section: NAV_SECTION.plan },
@@ -5443,6 +5455,8 @@ window.addEventListener('popstate', (e) => {
  * die Praeferenzen nachlaedt. Ihn zu leeren gewaenne nichts und oeffnete ein
  * Fenster, in dem eine abgeschaltete Route wieder erreichbar waere. */
 function forgetSessionState() {
+  _familyApps?.destroy();
+  _familyApps = null;
   routerState.currentUser = null;
   // Eine ungepruefte Sitzung aus dem Abzug (#2293) endet mit.
   offlineSession.stop();

@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 220" width="240" height="220" role="img" aria-labelledby="toothbrush-title">
+  <title id="toothbrush-title">Lavarsi i denti</title>
+  <g stroke="#554d49" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+    <ellipse cx="120" cy="198" rx="91" ry="11" fill="#e7ddc9" stroke="none"/>
+    <path d="M70 145H112L111 186H97L91 161L85 186H71Z" fill="#e9a388"/><path d="M71 185H85V194H64Q62 187 71 185Z" fill="#fbf7ef"/><path d="M97 185H111Q120 187 118 194H97Z" fill="#fbf7ef"/>
+<rect x="83" y="87" width="16" height="20" rx="6" fill="#f7d9bd"/>
+<path d="M69 114Q56 131 61 144Q64 151 69 148Q73 146 73 141L79 124Z" fill="#f7d9bd"/>
+<path d="M78 100Q91 108 104 100L120 110L114 125L112 123V148Q91 152 70 148V123L68 125L62 110Z" fill="#9ac5db"/>
+<g transform="translate(91 65)">
+      <circle cx="-24" cy="3" r="5" fill="#f7d9bd"/>
+      <circle cx="24" cy="3" r="5" fill="#f7d9bd"/>
+      <ellipse cx="0" cy="0" rx="25" ry="27" fill="#f7d9bd"/>
+      <path d="M-25-2C-29-16-19-29-8-28C-4-35 5-33 10-28C21-30 29-19 26-7L24-1C17-2 11-8 7-13C3-6-6-5-10-10C-14-3-19-2-25-2Z" fill="#6d5849"/>
+      <g fill="#554d49" stroke="none"><circle cx="-8" cy="4" r="2"/><circle cx="8" cy="4" r="2"/></g>
+      <path d="M-5 14Q0 19 6 13" fill="none"/>
+    </g>
+<path d="M115 113L131 98L126 86Q124 81 128 78Q133 75 136 81L145 97Q147 101 143 106L125 128Z" fill="#f7d9bd"/>
+<path d="M103 81L138 66" fill="none" stroke="#9ac5db"/>
+<path d="M103 81L116 75" fill="none" stroke="#fbf7ef"/>
+<path d="M105 75L108 81M110 73L113 79" fill="none" stroke="#fbf7ef"/>
+<circle cx="104" cy="83" r="5" fill="#fbf7ef"/>
+<circle cx="113" cy="81" r="5" fill="#fbf7ef"/>
+<circle cx="115" cy="72" r="4" fill="#fbf7ef"/>
+<path d="M163 112Q154 105 148 113Q142 121 148 139L153 160Q155 168 160 164L167 150Q170 146 173 151L180 164Q185 168 187 159L192 136Q197 118 188 112Q182 107 175 112Q169 115 163 112Z" fill="#fbf7ef"/>
+<circle cx="161" cy="130" r="2" fill="#554d49" stroke="none"/>
+<circle cx="178" cy="130" r="2" fill="#554d49" stroke="none"/>
+<path d="M164 140Q170 146 176 139" fill="none"/>
+<circle cx="194" cy="95" r="5" fill="#9ac5db"/>
+<circle cx="207" cy="114" r="3" fill="#fbf7ef"/>
+  </g>
+</svg>

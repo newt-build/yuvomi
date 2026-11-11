@@ -1,4 +1,6 @@
 {
+  "familyTimer": { "title": "Timer" },
+  "familyAvatar": { "title": "Avatar", "description": "Figuren auswählen und die Profilbilder der Familie ändern." },
   "common": {
     "swipeSidesSwapped": "Die Wischrichtungen wurden getauscht - die Hauptaktion liegt jetzt auf der anderen Seite.",
     "apply": "Übernehmen",

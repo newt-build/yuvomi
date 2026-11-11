@@ -1,4 +1,6 @@
 {
+  "familyTimer": { "title": "Timer" },
+  "familyAvatar": { "title": "Avatar", "description": "Scegli i personaggi e aggiorna le immagini profilo della famiglia." },
   "common": {
     "swipeSidesSwapped": "Le direzioni di scorrimento sono state invertite: l'azione principale ora si trova sull'altro lato.",
     "apply": "Aggiungi",

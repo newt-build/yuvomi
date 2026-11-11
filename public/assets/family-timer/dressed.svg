@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 220" width="240" height="220" role="img" aria-labelledby="dressed-title">
+  <title id="dressed-title">Vestirsi</title>
+  <g stroke="#554d49" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+    <ellipse cx="120" cy="198" rx="91" ry="11" fill="#e7ddc9" stroke="none"/>
+    <path d="M70 145H112L111 186H97L91 161L85 186H71Z" fill="#e9a388"/><path d="M71 185H85V194H64Q62 187 71 185Z" fill="#fbf7ef"/><path d="M97 185H111Q120 187 118 194H97Z" fill="#fbf7ef"/>
+<rect x="83" y="87" width="16" height="20" rx="6" fill="#f7d9bd"/>
+<path d="M70 111Q56 101 52 86Q49 78 55 72L67 62Q72 59 75 64Q77 68 73 72L65 81L80 97Z" fill="#f7d9bd"/>
+<path d="M112 111Q127 100 132 86Q135 78 129 72L117 62Q112 59 109 64Q107 68 111 72L119 81L103 97Z" fill="#f7d9bd"/>
+<g transform="translate(91 64)">
+      <circle cx="-24" cy="3" r="5" fill="#f7d9bd"/>
+      <circle cx="24" cy="3" r="5" fill="#f7d9bd"/>
+      <ellipse cx="0" cy="0" rx="25" ry="27" fill="#f7d9bd"/>
+      <path d="M-25-2C-29-16-19-29-8-28C-4-35 5-33 10-28C21-30 29-19 26-7L24-1C17-2 11-8 7-13C3-6-6-5-10-10C-14-3-19-2-25-2Z" fill="#6d5849"/>
+      <g fill="#554d49" stroke="none"><circle cx="-8" cy="4" r="2"/><circle cx="8" cy="4" r="2"/></g>
+      <path d="M-5 14Q0 19 6 13" fill="none"/>
+    </g>
+<path d="M72 96L57 105L66 123L72 119V148Q92 154 113 148V119L119 123L129 105L110 96Q91 105 72 96Z" fill="#9ac5db"/>
+<path d="M78 97Q91 117 104 97" fill="#f7d9bd"/>
+<path d="M74 140Q91 145 110 140" fill="none"/>
+<rect x="153" y="179" width="56" height="12" rx="5" fill="#e9a388"/>
+<path d="M159 166H202Q208 166 207 171V179H154V172Q154 167 159 166Z" fill="#fbf7ef"/>
+<path d="M163 154H197Q202 154 202 160V166H157V160Q157 154 163 154Z" fill="#f5cf7c"/>
+<path d="M183 155V164M182 180V189" fill="none"/>
+  </g>
+</svg>

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 220" width="240" height="220" role="img" aria-labelledby="generic-step-title">
+  <title id="generic-step-title">Un passo della routine</title>
+  <g stroke="#554d49" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+    <ellipse cx="120" cy="198" rx="91" ry="11" fill="#e7ddc9" stroke="none"/>
+    <path d="M99 145H141L140 186H126L120 161L114 186H100Z" fill="#e9a388"/><path d="M100 185H114V194H93Q91 187 100 185Z" fill="#fbf7ef"/><path d="M126 185H140Q149 187 147 194H126Z" fill="#fbf7ef"/>
+<rect x="112" y="87" width="16" height="20" rx="6" fill="#f7d9bd"/>
+<path d="M107 100Q120 108 133 100L149 110L143 125L141 123V148Q120 152 99 148V123L97 125L91 110Z" fill="#9ac5db"/>
+<g transform="translate(120 65)">
+      <circle cx="-24" cy="3" r="5" fill="#f7d9bd"/>
+      <circle cx="24" cy="3" r="5" fill="#f7d9bd"/>
+      <ellipse cx="0" cy="0" rx="25" ry="27" fill="#f7d9bd"/>
+      <path d="M-25-2C-29-16-19-29-8-28C-4-35 5-33 10-28C21-30 29-19 26-7L24-1C17-2 11-8 7-13C3-6-6-5-10-10C-14-3-19-2-25-2Z" fill="#6d5849"/>
+      <g fill="#554d49" stroke="none"><circle cx="-8" cy="4" r="2"/><circle cx="8" cy="4" r="2"/></g>
+      <path d="M-5 14Q0 19 6 13" fill="none"/>
+    </g>
+<path d="M96 115Q87 128 95 141Q98 146 104 142L114 133L106 124L102 126Z" fill="#f7d9bd"/>
+<path d="M144 115Q153 128 145 141Q142 146 136 142L126 133L134 124L138 126Z" fill="#f7d9bd"/>
+<path d="M120 111L126 122L139 124L130 133L132 146L120 140L108 146L110 133L101 124L114 122Z" fill="#f5cf7c"/>
+<path d="M103 129Q99 125 96 130Q94 134 99 137L106 139Q110 138 109 134Z" fill="#f7d9bd"/>
+<path d="M137 129Q141 125 144 130Q146 134 141 137L134 139Q130 138 131 134Z" fill="#f7d9bd"/>
+<path d="M62 92Q64 100 72 102Q64 104 62 112Q60 104 52 102Q60 100 62 92Z" fill="#f5cf7c"/>
+<path d="M181 69Q183 75 189 77Q183 79 181 85Q179 79 173 77Q179 75 181 69Z" fill="#f5cf7c"/>
+  </g>
+</svg>

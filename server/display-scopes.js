@@ -78,6 +78,10 @@ export const DISPLAY_SCOPES = Object.freeze([
 export const DISPLAY_WRITE_ROUTES = Object.freeze([
   Object.freeze({ method: 'PATCH', pattern: /^\/tasks\/\d+\/status$/ }),
   Object.freeze({ method: 'POST', pattern: /^\/rewards\/redemptions$/ }),
+  // Family fork: explicit device reports only, never routine editing or rewards.
+  Object.freeze({ method: 'POST', pattern: /^\/tasks\/timers\/runs$/ }),
+  Object.freeze({ method: 'PUT', pattern: /^\/family-avatars\/users\/\d+$/ }),
+  Object.freeze({ method: 'POST', pattern: /^\/tasks\/timers\/runs\/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/steps$/i }),
 ]);
 
 /** Die Module daraus, ohne Zugriffsart - fuer die Rechteaufloesung. */
@@ -129,6 +133,8 @@ export const DISPLAY_READ_PATHS = Object.freeze([
   '/auth/me',
   '/preferences',
   '/modules',
+  '/family-apps',
+  '/family-avatars',
   // Die Personen, fuer die dieses Tablett handeln darf (#1209). Sie steht hier
   // und nicht unter einem Modul, weil `/displays` keines ist - dasselbe, was
   // schon fuer die drei darueber gilt. Die Route selbst laesst nur ein Display
@@ -236,6 +242,7 @@ export function displayMayRead(method, path, { screensaver = false } = {}) {
   if (String(method || '').toUpperCase() !== 'GET') return false;
   const p = String(path || '');
   if (DISPLAY_READ_PATHS.includes(p)) return true;
+  if (/^\/family-avatars\/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/image$/i.test(p)) return true;
   return screensaver === true && DISPLAY_READ_ROUTES.some((pattern) => pattern.test(p));
 }
 

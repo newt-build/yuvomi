@@ -1,4 +1,6 @@
 {
+  "familyTimer": { "title": "Timers" },
+  "familyAvatar": { "title": "Avatar", "description": "Choose characters and update household profile pictures." },
   "common": {
     "swipeSidesSwapped": "Swipe directions have been swapped - the main action is now on the other side.",
     "apply": "Add",

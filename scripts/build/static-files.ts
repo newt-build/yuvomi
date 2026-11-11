@@ -35,6 +35,7 @@ export const COPY_LIST: readonly CopyEntry[] = [
   { path: 'lucide-scope.js', precache: true, why: 'classic deferred script right after the icon bundle' },
   { path: 'favicon.ico', precache: true, why: 'linked from index.html' },
   { path: 'icons/', precache: true, why: 'linked from index.html, manifest.json and the push handler in sw.js' },
+  { path: 'assets/family-timer/', precache: true, why: 'original Family routine illustrations, referenced by the native timer snapshot' },
   { path: 'manifest.json', precache: true, why: 'the PWA manifest file (the /manifest.webmanifest route renders its own)' },
   { path: 'offline.html', precache: true, why: 'the service worker answers with it when nothing else is cached' },
   { path: 'robots.txt', precache: false, why: 'for crawlers, not for the app' },

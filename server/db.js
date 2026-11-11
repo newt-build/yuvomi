@@ -32,6 +32,8 @@ import { toE164, defaultCountryFromConfig } from './utils/phone.js';
 import { todayKey } from './utils/timezone.js';
 import { addMonthsClamped, liftToAnchorDay } from './utils/interval-date.js';
 import { groupBatchesIntoProducts, productKey } from './services/pantry-products.js';
+import { FAMILY_TIMER_SCHEMA } from './services/family-timer-schema.js';
+import { FAMILY_AVATAR_SCHEMA } from './services/family-avatar-schema.js';
 
 const log = createLogger('DB');
 
@@ -12064,6 +12066,16 @@ const MIGRATIONS = [
         database.exec('ALTER TABLE inventory_items ADD COLUMN tags TEXT');
       }
     },
+  },
+  {
+    version: 285,
+    description: 'Family native timer: immutable per-child runs and durable operation receipts',
+    up: FAMILY_TIMER_SCHEMA,
+  },
+  {
+    version: 286,
+    description: 'Family character catalogue and profile-image associations',
+    up: FAMILY_AVATAR_SCHEMA,
   },
 ];
 
