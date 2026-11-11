@@ -1,0 +1,19 @@
+{
+  "menu": "Morgen-Timer",
+  "module": "Morgen-Timer",
+  "title": "Morgen-Timer",
+  "intro": "Die Morgenroutine, Schritt für Schritt. Die Zeit läuft, aber ein Schritt schließt nur mit „Fertig“.",
+  "start": "Starten",
+  "done": "Fertig",
+  "reset": "Neu starten",
+  "soundOn": "Ton an",
+  "soundOff": "Ton aus",
+  "remaining": "Restzeit",
+  "overLimit": "Limit überschritten",
+  "finished": "Routine abgeschlossen.",
+  "stepWake": "Aufwachen und aufstehen",
+  "stepTeeth": "Zähne putzen",
+  "stepDress": "Anziehen",
+  "stepBag": "Schulranzen packen",
+  "stepShoes": "Schuhe und raus"
+}

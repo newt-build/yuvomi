@@ -1,0 +1,24 @@
+{
+  "menu": "Logopädie",
+  "module": "Logopädie",
+  "title": "Logopädie",
+  "intro": "Wähle eine Lautgruppe. Die Sitzung ist kurz: ein Wort nach dem anderen, ohne Noten.",
+  "wordCount": "{count} Wörter",
+  "progress": "Wort {current} von {total}",
+  "sayItAloud": "Sprich es langsam und deutlich.",
+  "done": "Geschafft",
+  "practiseAgain": "Noch üben",
+  "stop": "Abbrechen",
+  "finished": "Sitzung beendet.",
+  "summaryDone": "{count} Wörter geschafft.",
+  "summaryAgain": "Nächstes Mal noch üben:",
+  "newSession": "Neue Sitzung",
+  "focus": {
+    "tr_dr": "TR · DR",
+    "pr_br": "PR · BR",
+    "cr_gr_fr": "CR · GR · FR",
+    "r_iniziale": "R am Anfang",
+    "r_intervocalica": "R zwischen Vokalen",
+    "rr_doppia": "Doppeltes RR"
+  }
+}

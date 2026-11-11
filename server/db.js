@@ -12007,6 +12007,39 @@ const MIGRATIONS = [
       }
     },
   },
+  {
+    version: 283,
+    description: 'inventory_items: containers (kind + container_id)',
+    // Ein Behaelter ist ein Gegenstand, kein zweiter Ort (Familien-Fork,
+    // Entscheidung "location zwei Ebenen + Behaelter + Objekt"). Deshalb
+    // dieselbe Zeile, dieselbe Tabelle, dieselben Dokumente und Fotos: kein
+    // paralleler Baum aus phantom-artigen Knoten.
+    //
+    // `kind` unterscheidet Objekt von Behaelter; `container_id` verweist auf
+    // einen Behaelter DERSELBEN Tabelle. Es gibt genau EINE Zwischenebene:
+    // ein Behaelter traegt kein container_id (die Route lehnt es ab, das
+    // Schema kann es nicht ausdruecken, weil SQLite keinen Check ueber Zeilen
+    // hinweg kennt). `location_id` bleibt die direkte Position; die effektive
+    // Position eines Objekts ist `COALESCE(item.location_id,
+    // container.location_id)` und wird NIE als Kopie gespeichert.
+    //
+    // ON DELETE SET NULL auf container_id ist die Basis der Loeschregel: die
+    // Route verweigert das Loeschen eines nicht leeren Behaelters, und wenn
+    // doch je eine Zeile verschwindet, verliert ein Objekt seinen Behaelter,
+    // nicht seinen Platz in der Datenbank.
+    up(database) {
+      const cols = database.prepare('PRAGMA table_info(inventory_items)').all();
+      const has = (name) => cols.some((c) => c.name === name);
+      if (!has('kind')) {
+        database.exec("ALTER TABLE inventory_items ADD COLUMN kind TEXT NOT NULL DEFAULT 'item' CHECK(kind IN ('item','container'))");
+      }
+      if (!has('container_id')) {
+        database.exec('ALTER TABLE inventory_items ADD COLUMN container_id INTEGER REFERENCES inventory_items(id) ON DELETE SET NULL');
+      }
+      database.exec('CREATE INDEX IF NOT EXISTS idx_inventory_items_container ON inventory_items(container_id)');
+      database.exec('CREATE INDEX IF NOT EXISTS idx_inventory_items_kind ON inventory_items(kind)');
+    },
+  },
 ];
 
 /**

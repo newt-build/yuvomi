@@ -617,7 +617,7 @@ function renderItemRow(item) {
           ${item.status !== 'active' ? `<span class="inventory-status-badge inventory-status-badge--${esc(item.status)}">${esc(statusLabel(item.status))}</span>` : ''}
           ${deadlineChipHtml(item)}
         </span>
-        ${item.location_path ? `<span class="list-row__meta">${esc(item.location_path)}</span>` : ''}
+        ${item.container ? `<span class="list-row__meta">${esc(t('inventory.inContainer').replace('{container}', item.container.name))}${item.location_source === 'inherited' && item.effective_location_path ? ` · ${esc(item.effective_location_path)}` : ''}</span>` : (item.location_path ? `<span class="list-row__meta">${esc(item.location_path)}</span>` : '')}
       </button>
       ${canSeeInventoryPrices() ? `<span class="inventory-row__value">${item.purchase_price != null ? esc(formatMoney(item.purchase_price, item.currency)) : ''}</span>` : ''}
     </div>`;
@@ -837,6 +837,27 @@ function locationOptionsHtml() {
     for (const child of root.subcategories ?? []) {
       options.push(`<option value="${child.id}">${esc(root.name)} · ${esc(child.name)}</option>`);
     }
+  }
+  return options.join('');
+}
+
+/**
+ * Die Optionen der BEHAELTER-Auswahl (Familien-Fork, §10.2).
+ *
+ * Aufgelistet werden nur Gegenstaende mit `kind === 'container'`, samt ihrem
+ * Ort - ein Karton ohne Ort ist trotzdem waehlbar, sonst liesse sich ein
+ * Gegenstand nicht in einen noch nicht verorteten Behaelter legen. Der
+ * aktuelle Behaelter selbst wird ausgeschlossen: ein Behaelter steht nie in
+ * sich selbst.
+ */
+function containerOptionsHtml(currentItemId = null) {
+  const options = [`<option value="">${esc(t('inventory.noContainer'))}</option>`];
+  const containers = state.items
+    .filter((entry) => entry.kind === 'container' && entry.id !== currentItemId)
+    .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+  for (const c of containers) {
+    const where = c.effective_location_path ? ` — ${c.effective_location_path}` : '';
+    options.push(`<option value="${c.id}">${esc(c.name + where)}</option>`);
   }
   return options.join('');
 }
@@ -1194,6 +1215,21 @@ function renderItemDetail(item, history, onDoneTrackedDate, historyLoadFailed) {
     { icon: 'image', label: t('inventory.photoLabel'), node: photoDetailNode(item.photo_data) },
     { icon: item.category_icon, label: t('inventory.categoryLabel'), value: itemCategoryLabel(item) },
     { icon: 'map-pin', label: t('inventory.locationLabel'), value: item.location_path || '' },
+    // Behaelter und effektive Position getrennt zeigen (Familien-Fork, §10.2):
+    // "Ort" oben ist die EIGENE Position, hier steht der Behaelter und - falls
+    // der Ort von ihm kommt - ausdruecklich als geerbt.
+    ...(item.container ? [{
+      icon: 'box',
+      label: t('inventory.containerLabel'),
+      value: item.location_source === 'inherited' && item.effective_location_path
+        ? t('inventory.locationInheritedHint').replace('{container}', item.container.name).replace('{location}', item.effective_location_path)
+        : item.container.name,
+    }] : []),
+    ...(item.kind === 'container' ? [{
+      icon: 'layers',
+      label: t('inventory.kindLabel'),
+      value: `${t('inventory.kindContainer')}${item.child_count ? ` · ${t('inventory.containerChildren').replace('{count}', String(item.child_count))}` : ''}`,
+    }] : []),
     {
       group: t('inventory.detailGroupPurchase'),
       rows: [
@@ -1870,6 +1906,9 @@ function buildItemForm({ mode, item = null }) {
   // Derselbe Helfer baut die Auswahl neu, wenn der gewaehlte Ort beim
   // Speichern weg ist (#1909).
   const locationOptions = locationOptionsHtml();
+  // Behaelter-Auswahl (Familien-Fork, §10.2): der bearbeitete Gegenstand
+  // selbst faellt heraus, damit er nicht in sich selbst landet.
+  const containerOptions = containerOptionsHtml(isEdit ? item.id : null);
   const conditionOptions = CONDITIONS.map((c) => `<option value="${c}">${esc(t(`inventory.condition${c.charAt(0).toUpperCase()}${c.slice(1)}`))}</option>`).join('');
   const statusOptions = STATUSES.map((s) => `<option value="${s}">${esc(t(`inventory.status${s.charAt(0).toUpperCase()}${s.slice(1)}`))}</option>`).join('');
   const documentCategoryOptions = DOCUMENT_CATEGORIES
@@ -1888,6 +1927,20 @@ function buildItemForm({ mode, item = null }) {
         <div class="form-group">
           <label class="form-label" for="inv-location">${esc(t('inventory.locationLabel'))}</label>
           <select id="inv-location" class="form-input">${locationOptions}</select>
+        </div>
+      </div>
+      <div class="form-pair form-pair--wide">
+        <div class="form-group">
+          <label class="form-label" for="inv-kind">${esc(t('inventory.kindLabel'))}</label>
+          <select id="inv-kind" class="form-input">
+            <option value="item">${esc(t('inventory.kindItem'))}</option>
+            <option value="container">${esc(t('inventory.kindContainer'))}</option>
+          </select>
+        </div>
+        <div class="form-group" id="inv-container-group">
+          <label class="form-label" for="inv-container">${esc(t('inventory.containerLabel'))}</label>
+          <select id="inv-container" class="form-input">${containerOptions}</select>
+          <p class="form-hint" id="inv-container-hint" hidden></p>
         </div>
       </div>
       <div class="form-group">
@@ -2043,6 +2096,36 @@ function buildItemForm({ mode, item = null }) {
     panel.querySelector('#inv-name').value = isEdit ? item.name : '';
     panel.querySelector('#inv-category').value = isEdit ? item.category : 'other';
     panel.querySelector('#inv-location').value = isEdit && item.location_id ? String(item.location_id) : '';
+    // Behaelterfelder (Familien-Fork, §10.2)
+    const kindSelect = panel.querySelector('#inv-kind');
+    const containerGroup = panel.querySelector('#inv-container-group');
+    const containerSelect = panel.querySelector('#inv-container');
+    const containerHint = panel.querySelector('#inv-container-hint');
+    kindSelect.value = isEdit ? item.kind : 'item';
+    containerSelect.value = isEdit && item.container_id ? String(item.container_id) : '';
+
+    // Ein Behaelter steht nie in einem anderen Behaelter: die Auswahl wird
+    // fuer Behaelter ausgeblendet statt nur serverseitig abgelehnt.
+    const syncContainerVisibility = () => {
+      const isContainer = kindSelect.value === 'container';
+      containerGroup.hidden = isContainer;
+      if (isContainer) containerSelect.value = '';
+      // ERBTE POSITION SICHTBAR MACHEN: solange ein Behaelter gewaehlt ist und
+      // kein eigener Ort gesetzt wurde, sagt das Formular, woher der Ort kommt.
+      const chosen = state.items.find((entry) => String(entry.id) === containerSelect.value);
+      const hasOwnLocation = !!panel.querySelector('#inv-location').value;
+      if (!isContainer && chosen && !hasOwnLocation && chosen.effective_location_path) {
+        containerHint.hidden = false;
+        containerHint.textContent = t('inventory.locationInheritedHint').replace('{container}', chosen.name).replace('{location}', chosen.effective_location_path);
+      } else {
+        containerHint.hidden = true;
+        containerHint.textContent = '';
+      }
+    };
+    kindSelect.addEventListener('change', syncContainerVisibility);
+    containerSelect.addEventListener('change', syncContainerVisibility);
+    panel.querySelector('#inv-location').addEventListener('change', syncContainerVisibility);
+    syncContainerVisibility();
     const priceField = panel.querySelector('#inv-purchase-price');
     if (priceField) priceField.value = isEdit && item.purchase_price != null ? amountToInput(item.purchase_price, itemCurrency(item)) : '';
     panel.querySelector('#inv-status').value = isEdit ? item.status : 'active';
@@ -2251,6 +2334,12 @@ async function saveItem(panel, mode, item, attachments, pickedBooking, photoData
     name,
     category,
     location_id: panel.querySelector('#inv-location').value || null,
+    // Behaelter (Familien-Fork, §10.2): `container_id` wird als volles Replace
+    // mitgesendet. Fuer Behaelter IMMER null - die eine Zwischenebene.
+    kind: panel.querySelector('#inv-kind').value,
+    container_id: panel.querySelector('#inv-kind').value === 'container'
+      ? null
+      : (panel.querySelector('#inv-container').value || null),
     purchase_date: panel.querySelector('#inv-purchase-date').value || null,
     ...(priceInput ? { purchase_price: parseAmountInput(priceInput.value) } : {}),
     status: panel.querySelector('#inv-status').value,

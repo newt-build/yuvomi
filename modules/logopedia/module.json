@@ -1,0 +1,19 @@
+{
+  "manifestVersion": 1,
+  "id": "logopedia",
+  "name": "Logopedia",
+  "version": "1.0.0",
+  "description": "Esercizi di pronuncia con le parole approvate del catalogo Logopedia. Sessione sul dispositivo.",
+  "entry": "index.js",
+  "style": "style.css",
+  "icon": "mic",
+  "accent": "#0D9488",
+  "i18n": { "defaultLocale": "it" },
+  "menu": { "show": true, "label": "Logopedia", "labelKey": "menu", "icon": "mic", "order": 121 },
+  "page": { "composition": "dashboard", "width": "content", "navigation": "standard", "responsive": "standard" },
+  "capabilities": {
+    "permissions": {
+      "module": { "label": "Logopedia", "labelKey": "module", "icon": "mic" }
+    }
+  }
+}

@@ -4,6 +4,10 @@ node_modules/
 # External/customized modules
 modules/*
 !modules/.gitkeep
+# Eigene Module dieses Forks: versioniert, weil sie zu unserem Produkt gehoeren
+# und nicht von Hand auf den Server kopiert werden sollen (Familien-Fork).
+!modules/morning-timer/
+!modules/logopedia/
 
 # Environment variables (NEVER commit)
 .env

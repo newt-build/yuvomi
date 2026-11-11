@@ -1,0 +1,24 @@
+{
+  "menu": "Logopedia",
+  "module": "Logopedia",
+  "title": "Logopedia",
+  "intro": "Scegli un gruppo di suoni. La sessione è breve: una parola alla volta, senza voti.",
+  "wordCount": "{count} parole",
+  "progress": "Parola {current} di {total}",
+  "sayItAloud": "Dillo ad alta voce, con calma.",
+  "done": "Fatto",
+  "practiseAgain": "Da riprovare",
+  "stop": "Interrompi",
+  "finished": "Sessione conclusa.",
+  "summaryDone": "{count} parole fatte.",
+  "summaryAgain": "Da riprovare la prossima volta:",
+  "newSession": "Nuova sessione",
+  "focus": {
+    "tr_dr": "TR · DR",
+    "pr_br": "PR · BR",
+    "cr_gr_fr": "CR · GR · FR",
+    "r_iniziale": "R all'inizio",
+    "r_intervocalica": "R tra due vocali",
+    "rr_doppia": "RR doppia"
+  }
+}

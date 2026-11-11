@@ -122,6 +122,47 @@ function locationPath(locationId) {
   return parent ? `${parent.name} · ${loc.name}` : loc.name;
 }
 
+/**
+ * Behaelter eines Gegenstands, so wie ihn Liste und Detail brauchen.
+ * `null`, wenn kein Behaelter gesetzt ist ODER die Zeile inzwischen weg ist -
+ * eine verwaiste container_id darf die Ansicht nicht scheitern lassen.
+ */
+function containerRef(containerId) {
+  if (containerId == null) return null;
+  const row = db.get().prepare('SELECT id, name, location_id, kind FROM inventory_items WHERE id = ?').get(containerId);
+  if (!row || row.kind !== 'container') return null;
+  return {
+    id: row.id,
+    name: row.name,
+    location_id: row.location_id,
+    location_path: locationPath(row.location_id),
+  };
+}
+
+/**
+ * EFFEKTIVE POSITION (Familien-Fork, §10.2): eine direkte location_id gewinnt,
+ * sonst erbt der Gegenstand die Position seines Behaelters. Die geerbte
+ * Position wird NIE als Kopie gespeichert - sie wird bei jeder Antwort aus den
+ * zwei Zeilen gerechnet. Deshalb traegt die Antwort beide Teile getrennt:
+ * `location_path` (eigene), `effective_location_path` und `location_source`
+ * ('direct' | 'inherited' | null), damit die Oberflaeche "geerbt von X"
+ * anzeigen kann, ohne zu raten.
+ */
+function withEffectiveLocation(row, container) {
+  if (row.location_id != null) {
+    return { ...row, effective_location_path: locationPath(row.location_id), location_source: 'direct' };
+  }
+  if (container && container.location_id != null) {
+    return {
+      ...row,
+      effective_location_path: container.location_path,
+      location_source: 'inherited',
+      effective_location_from: container.name,
+    };
+  }
+  return { ...row, effective_location_path: null, location_source: null };
+}
+
 // PREISE NUR MIT RECHT (R23, D5). Wie die Betraege der Haushaltshilfe: die
 // Felder fehlen in der Antwort, statt leer dazustehen - ein `null` hiesse
 // "kein Preis eingetragen", und das waere eine Falschaussage. Verknuepfte
@@ -160,8 +201,13 @@ function loadItem(id, budget, viewer) {
   if (!item) return null;
   const category = db.get().prepare('SELECT name, icon, label_key FROM inventory_categories WHERE key = ?').get(item.category);
   const linkedEntries = loadLinkedEntries(item.id, budget);
+  const container = containerRef(item.container_id);
   return {
-    ...item,
+    ...withEffectiveLocation(item, container),
+    container,
+    child_count: item.kind === 'container'
+      ? db.get().prepare('SELECT count(*) AS c FROM inventory_items WHERE container_id = ?').get(item.id).c
+      : 0,
     category_name: category?.name ?? item.category,
     category_icon: category?.icon ?? 'package',
     category_label_key: category?.label_key ?? null,
@@ -173,25 +219,37 @@ function loadItem(id, budget, viewer) {
   };
 }
 
-function loadItems({ category, locationId, status, q } = {}, budget, viewer) {
+function loadItems({ category, locationId, status, q, containerId, kind } = {}, budget, viewer) {
   const clauses = [];
   const params = [];
   if (category !== undefined) { clauses.push('ii.category = ?'); params.push(category); }
-  if (locationId !== undefined) { clauses.push('ii.location_id = ?'); params.push(locationId); }
+  if (locationId !== undefined) {
+    // Ein Ort filtert auch die Gegenstaende, die ihn ueber ihren Behaelter
+    // erben - sonst faende "Keller" den Karton im Keller nicht, obwohl die
+    // Sammlung ihn anzeigt.
+    clauses.push('(ii.location_id = ? OR (ii.location_id IS NULL AND c.location_id = ?))');
+    params.push(locationId, locationId);
+  }
+  if (containerId !== undefined) { clauses.push('ii.container_id = ?'); params.push(containerId); }
+  if (kind !== undefined) { clauses.push('ii.kind = ?'); params.push(kind); }
   if (status !== undefined) { clauses.push('ii.status = ?'); params.push(status); }
   if (q) {
     // account_username ist mitgesucht (#1004): das Feld traegt kein Geheimnis,
     // und "wo ist das Geraet, das unter dieser Adresse laeuft" ist genau die
     // Frage, fuer die es angelegt wurde.
-    clauses.push('(ii.name LIKE ? OR ii.brand LIKE ? OR ii.model LIKE ? OR ii.serial_number LIKE ? OR ii.account_username LIKE ?)');
+    // Der Behaeltername ist mitgesucht: "Schachtel Werkzeug" findet sonst
+    // nichts, obwohl der Karton genau so heisst (Familien-Fork, §10.2).
+    clauses.push('(ii.name LIKE ? OR ii.brand LIKE ? OR ii.model LIKE ? OR ii.serial_number LIKE ? OR ii.account_username LIKE ? OR c.name LIKE ?)');
     const like = `%${q}%`;
-    params.push(like, like, like, like, like);
+    params.push(like, like, like, like, like, like);
   }
   const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
   const rows = db.get().prepare(`
-    SELECT ii.*, ic.name AS category_name, ic.icon AS category_icon, ic.label_key AS category_label_key
+    SELECT ii.*, ic.name AS category_name, ic.icon AS category_icon, ic.label_key AS category_label_key,
+           c.name AS container_name, c.location_id AS container_location_id
     FROM inventory_items ii
     LEFT JOIN inventory_categories ic ON ic.key = ii.category
+    LEFT JOIN inventory_items c ON c.id = ii.container_id AND c.kind = 'container'
     ${where}
     ORDER BY ii.name COLLATE NOCASE ASC
   `).all(...params);
@@ -200,8 +258,13 @@ function loadItems({ category, locationId, status, q } = {}, budget, viewer) {
   const datesByItem = loadTrackedDatesForItems(rows.map((r) => r.id));
   return rows.map((row) => {
     const linkedEntries = entriesByItem.get(row.id) || [];
+    const container = row.container_name == null ? null : {
+      id: row.container_id, name: row.container_name,
+      location_id: row.container_location_id, location_path: locationPath(row.container_location_id),
+    };
     return {
-      ...row,
+      ...withEffectiveLocation(row, container),
+      container,
       location_path: locationPath(row.location_id),
       attachments: documentLinksOf(byItem, row.id, viewer),
       linked_entries: linkedEntries,
@@ -256,6 +319,34 @@ function validateItemFields(body) {
       }
     }
     values.location_id = vLoc.value;
+  }
+
+  // ── Behaelter (Familien-Fork, §10.2) ────────────────────────────────
+  // `kind` ist Pflicht-Default 'item': ein Bestandsdatensatz ohne Angabe
+  // bleibt ein Gegenstand, auch nach einem vollen Replace.
+  const vKind = oneOf(body.kind || 'item', ['item', 'container'], 'kind');
+  results.push(vKind);
+  values.kind = vKind.value ?? 'item';
+
+  if (body.container_id === null || body.container_id === '' || body.container_id === undefined) {
+    values.container_id = null;
+  } else {
+    const vContainer = idParam(body.container_id, 'container_id');
+    results.push(vContainer);
+    if (vContainer.value !== null) {
+      // GENAU EINE ZWISCHENEBENE: ein Behaelter kann nicht selbst in einem
+      // Behaelter stehen. Sonst entstuende der beliebig tiefe Baum, den die
+      // Entscheidung ausdruecklich nicht wollte.
+      if (values.kind === 'container') {
+        results.push({ error: 'A container cannot itself sit in a container.' });
+      } else {
+        const target = db.get().prepare('SELECT id, kind FROM inventory_items WHERE id = ?').get(vContainer.value);
+        if (!target || target.kind !== 'container') {
+          results.push({ error: 'Container not found.' });
+        }
+      }
+    }
+    values.container_id = vContainer.value;
   }
 
   const vPurchaseDate = date(body.purchase_date, 'purchase_date');
@@ -391,8 +482,16 @@ router.get('/', (req, res) => {
     const status = typeof req.query.status === 'string' && STATUSES.includes(req.query.status) ? req.query.status : undefined;
     const q = typeof req.query.q === 'string' ? req.query.q.trim().slice(0, 100) : undefined;
 
+    let containerId;
+    if (req.query.container_id !== undefined) {
+      const n = parseInt(req.query.container_id, 10);
+      if (!n || n < 1) return res.status(400).json({ error: 'container_id must be a positive number.', code: 400 });
+      containerId = n;
+    }
+    const kind = req.query.kind === 'container' || req.query.kind === 'item' ? req.query.kind : undefined;
+
     const prices = viewsPrices(req);
-    const items = loadItems({ category, locationId, status, q }, budgetViewer(req), documentViewer(req));
+    const items = loadItems({ category, locationId, status, q, containerId, kind }, budgetViewer(req), documentViewer(req));
     res.json({ data: prices ? items : items.map(withoutPrices) });
   } catch (err) {
     log.error('GET / error:', err);
@@ -464,14 +563,16 @@ router.post('/', (req, res) => {
         INSERT INTO inventory_items
           (name, brand, model, serial_number, category, location_id, purchase_date,
            purchase_price, currency, vendor, warranty_months, condition,
-           status, notes, photo_data, account_username, odometer, odometer_unit, odometer_on, created_by)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           status, notes, photo_data, account_username, odometer, odometer_unit, odometer_on,
+           kind, container_id, created_by)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         values.name, values.brand, values.model, values.serial_number, values.category,
         values.location_id, values.purchase_date, values.purchase_price,
         values.currency, values.vendor, values.warranty_months, values.condition, values.status,
         values.notes, values.photo_data, values.account_username,
-        values.odometer, values.odometer_unit, values.odometer_on, userId,
+        values.odometer, values.odometer_unit, values.odometer_on,
+        values.kind, values.container_id, userId,
       );
 
       syncReminder({
@@ -545,14 +646,16 @@ router.put('/:id', (req, res) => {
         SET name = ?, brand = ?, model = ?, serial_number = ?, category = ?, location_id = ?,
             purchase_date = ?, purchase_price = ?, currency = ?, vendor = ?,
             warranty_months = ?, condition = ?, status = ?, notes = ?, photo_data = ?,
-            account_username = ?, odometer = ?, odometer_unit = ?, odometer_on = ?
+            account_username = ?, odometer = ?, odometer_unit = ?, odometer_on = ?,
+            kind = ?, container_id = ?
         WHERE id = ?
       `).run(
         values.name, values.brand, values.model, values.serial_number, values.category,
         values.location_id, values.purchase_date, values.purchase_price,
         values.currency, values.vendor, values.warranty_months, values.condition, values.status,
         values.notes, values.photo_data, values.account_username,
-        values.odometer, values.odometer_unit, values.odometer_on, item.id,
+        values.odometer, values.odometer_unit, values.odometer_on,
+        values.kind, values.container_id, item.id,
       );
 
       syncReminder({
@@ -790,11 +893,32 @@ router.delete('/:id', (req, res) => {
   try {
     const vId = idParam(req.params.id, 'id');
     if (vId.error) return res.status(400).json({ error: vId.error, code: 400 });
-    const item = db.get().prepare('SELECT id, created_by FROM inventory_items WHERE id = ?').get(vId.value);
+    const item = db.get().prepare('SELECT id, created_by, kind FROM inventory_items WHERE id = ?').get(vId.value);
     if (!item) return res.status(404).json({ error: 'Item not found.', code: 404, reason: 'inventory_item_not_found' });
     if (refuseForeignItem(req, res, item)) return;
 
+    // EIN BEHAELTER MIT INHALT WIRD NICHT STILL GELEERT (Familien-Fork, §10.2).
+    // Es gibt kein Kaskadenloeschen der Gegenstaende: die Antwort nennt die
+    // Zahl, damit die Oberflaeche sie zeigen kann, und der Aufrufer entscheidet
+    // entweder umzuraeumen oder `?detach=1` ausdruecklich zu verlangen.
+    if (item.kind === 'container') {
+      const children = db.get().prepare('SELECT count(*) AS c FROM inventory_items WHERE container_id = ?').get(item.id).c;
+      if (children > 0 && req.query.detach !== '1') {
+        return res.status(409).json({
+          error: `Container still holds ${children} item(s).`,
+          code: 409,
+          reason: 'inventory_container_not_empty',
+          child_count: children,
+        });
+      }
+    }
+
     const deleted = db.get().transaction(() => {
+      // Ausdrueckliches Abloesen: die Gegenstaende bleiben, sie verlieren nur
+      // den Behaelter. Kein DELETE auf ihnen.
+      if (item.kind === 'container') {
+        db.get().prepare('UPDATE inventory_items SET container_id = NULL WHERE container_id = ?').run(item.id);
+      }
       db.get().prepare("DELETE FROM reminders WHERE entity_type = 'inventory_item' AND entity_id = ?").run(vId.value);
       removeTrackedDateReminders(vId.value);
       return db.get().prepare('DELETE FROM inventory_items WHERE id = ?').run(vId.value);

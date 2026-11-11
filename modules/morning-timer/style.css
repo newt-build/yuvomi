@@ -1,0 +1,80 @@
+.morning-timer { display: flex; flex-direction: column; gap: var(--space-4, 1rem); }
+
+.morning-timer__intro { margin: 0; color: var(--text-muted, #5b6472); }
+
+.morning-timer__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3, 0.75rem);
+  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+  border-radius: var(--radius-lg, 14px);
+  background: color-mix(in srgb, var(--active-module-accent, #2563EB) 10%, transparent);
+}
+
+.morning-timer__head--over {
+  background: color-mix(in srgb, #DC2626 14%, transparent);
+}
+
+.morning-timer__head-label { font-size: 0.9rem; color: var(--text-muted, #5b6472); }
+.morning-timer__head-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.morning-timer__steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 0.5rem);
+}
+
+.morning-timer__step {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: var(--space-3, 0.75rem);
+  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+  border-radius: var(--radius-lg, 14px);
+  background: var(--surface-raised, #fff);
+  border: 1px solid var(--border-subtle, #e5e7eb);
+}
+
+.morning-timer__step.is-current {
+  border-color: var(--active-module-accent, #2563EB);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--active-module-accent, #2563EB) 22%, transparent);
+}
+
+.morning-timer__step.is-done { opacity: 0.6; }
+.morning-timer__step.is-over .morning-timer__budget { color: #DC2626; font-weight: 700; }
+
+.morning-timer__step-label { min-width: 0; }
+.morning-timer__budget {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted, #5b6472);
+}
+
+.morning-timer__start { align-self: flex-start; }
+.morning-timer__reset { align-self: flex-start; }
+
+.morning-timer__finished {
+  margin: 0;
+  padding: var(--space-4, 1rem);
+  border-radius: var(--radius-lg, 14px);
+  background: color-mix(in srgb, #16A34A 12%, transparent);
+  font-weight: 600;
+}
+
+@media (max-width: 480px) {
+  .morning-timer__step {
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas: "icon label budget" ". button button";
+  }
+  .morning-timer__step > i { grid-area: icon; }
+  .morning-timer__step-label { grid-area: label; }
+  .morning-timer__budget { grid-area: budget; }
+  .morning-timer__step [data-timer-done] { grid-area: button; justify-self: start; }
+}

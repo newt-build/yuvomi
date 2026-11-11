@@ -1,0 +1,19 @@
+{
+  "menu": "Timer mattutino",
+  "module": "Timer mattutino",
+  "title": "Timer mattutino",
+  "intro": "La routine del mattino, un passo alla volta. Il tempo scorre, ma il passo si chiude solo con «Fatto».",
+  "start": "Inizia",
+  "done": "Fatto",
+  "reset": "Ricomincia",
+  "soundOn": "Suono attivo",
+  "soundOff": "Suono spento",
+  "remaining": "Tempo rimasto",
+  "overLimit": "Limite superato",
+  "finished": "Routine completata.",
+  "stepWake": "Svegliarsi e alzarsi",
+  "stepTeeth": "Lavarsi i denti",
+  "stepDress": "Vestirsi",
+  "stepBag": "Preparare lo zaino",
+  "stepShoes": "Scarpe e uscita"
+}

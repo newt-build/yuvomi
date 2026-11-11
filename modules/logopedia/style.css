@@ -1,0 +1,75 @@
+.logopedia { display: flex; flex-direction: column; gap: var(--space-4, 1rem); }
+
+.logopedia__intro { margin: 0; color: var(--text-muted, #5b6472); }
+
+.logopedia__focuses {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-3, 0.75rem);
+}
+
+.logopedia__focus {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  padding: var(--space-4, 1rem);
+  text-align: left;
+  min-height: 44px;
+}
+
+.logopedia__focus-title { font-weight: 600; }
+.logopedia__focus-count { font-size: 0.85rem; color: var(--text-muted, #5b6472); }
+
+.logopedia__session-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3, 0.75rem);
+}
+
+.logopedia__progress { font-size: 0.9rem; color: var(--text-muted, #5b6472); }
+
+.logopedia__word {
+  margin: 0;
+  padding: var(--space-4, 1rem);
+  text-align: center;
+  font-size: clamp(2.4rem, 9vw, 4rem);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  border-radius: var(--radius-lg, 14px);
+  background: color-mix(in srgb, var(--active-module-accent, #0D9488) 10%, transparent);
+}
+
+.logopedia__hint { margin: 0; text-align: center; color: var(--text-muted, #5b6472); }
+
+.logopedia__actions {
+  display: flex;
+  gap: var(--space-3, 0.75rem);
+  flex-wrap: wrap;
+}
+
+.logopedia__finished { margin: 0; font-size: 1.2rem; font-weight: 600; }
+.logopedia__summary { display: flex; flex-direction: column; gap: var(--space-2, 0.5rem); }
+.logopedia__summary p { margin: 0; }
+
+.logopedia__again-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2, 0.5rem);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.logopedia__again-list li {
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  background: var(--surface-raised, #fff);
+  border: 1px solid var(--border-subtle, #e5e7eb);
+  font-size: 0.95rem;
+}
+
+@media (max-width: 480px) {
+  .logopedia__actions > .btn { flex: 1 1 100%; }
+}

@@ -1,0 +1,19 @@
+{
+  "manifestVersion": 1,
+  "id": "morning-timer",
+  "name": "Timer mattutino",
+  "version": "1.0.0",
+  "description": "Timer della routine del mattino con passi, tempo per passo e limite assoluto. Stato sul dispositivo.",
+  "entry": "index.js",
+  "style": "style.css",
+  "icon": "timer",
+  "accent": "#2563EB",
+  "i18n": { "defaultLocale": "it" },
+  "menu": { "show": true, "label": "Timer mattutino", "labelKey": "menu", "icon": "timer", "order": 120 },
+  "page": { "composition": "dashboard", "width": "content", "navigation": "standard", "responsive": "standard" },
+  "capabilities": {
+    "permissions": {
+      "module": { "label": "Timer mattutino", "labelKey": "module", "icon": "timer" }
+    }
+  }
+}

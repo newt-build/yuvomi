@@ -1,0 +1,19 @@
+{
+  "menu": "Morning timer",
+  "module": "Morning timer",
+  "title": "Morning timer",
+  "intro": "The morning routine, one step at a time. Time runs, but a step only closes with “Done”.",
+  "start": "Start",
+  "done": "Done",
+  "reset": "Start over",
+  "soundOn": "Sound on",
+  "soundOff": "Sound off",
+  "remaining": "Time left",
+  "overLimit": "Over the limit",
+  "finished": "Routine complete.",
+  "stepWake": "Wake up and get up",
+  "stepTeeth": "Brush teeth",
+  "stepDress": "Get dressed",
+  "stepBag": "Pack the school bag",
+  "stepShoes": "Shoes and out"
+}
